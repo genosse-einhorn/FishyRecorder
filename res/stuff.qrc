@@ -1,0 +1,10 @@
+<RCC>
+    <qresource prefix="/images">
+        <file alias="error.svg">dialog-error-symbolic.svg</file>
+        <file alias="info.svg">dialog-information-symbolic.svg</file>
+        <file alias="warning.svg">dialog-warning-symbolic.svg</file>
+    </qresource>
+    <qresource prefix="/">
+        <file>DejaVuSans.ttf</file>
+    </qresource>
+</RCC>
