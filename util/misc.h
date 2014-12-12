@@ -27,7 +27,7 @@ namespace Util {
         bool     m_active;
 
     public:
-        inline explicit SignalBlocker(QObject *o, bool active = true) : m_object(o), m_active(active) {
+        inline explicit SignalBlocker(QObject *o, bool active = true) : m_object(o), m_blockedBefore(false), m_active(active) {
             if (active)
                 m_blockedBefore = m_object->blockSignals(true);
         }
