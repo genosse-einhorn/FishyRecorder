@@ -15,12 +15,9 @@ TEMPLATE = app
 
 LIBS += -lsqlite3 -lmp3lame
 
-#QMAKE_CXXFLAGS += -std=c++11
-
 SOURCES += \
     recording/samplemover.cpp \
     recording/trackcontroller.cpp \
-    error/simulationwidget.cpp \
     recording/trackviewpane.cpp \
     recording/trackdataaccessor.cpp \
     export/progressdialog.cpp \
@@ -36,7 +33,6 @@ SOURCES += \
     util/customqtmetatypes.cpp \
     error/provider.cpp \
     error/widget.cpp \
-    error/simulation.cpp \
     main/main.cpp \
     main/mainwindow.cpp \
     export/mp3fileexporter.cpp \
@@ -44,7 +40,6 @@ SOURCES += \
 HEADERS += \
     recording/samplemover.h \
     recording/trackcontroller.h \
-    error/simulationwidget.h \
     util/misc.h \
     recording/trackviewpane.h \
     recording/trackdataaccessor.h \
@@ -61,7 +56,6 @@ HEADERS += \
     util/customqtmetatypes.h \
     error/provider.h \
     error/widget.h \
-    error/simulation.h \
     main/mainwindow.h \
     export/mp3fileexporter.h \
     main/aboutpane.h
@@ -74,6 +68,16 @@ FORMS    += \
     main/configpane.ui \
     main/quitdialog.ui \
     main/aboutpane.ui
+
+CONFIG(debug, debug|release) {
+    SOURCES += \
+        error/simulationwidget.cpp \
+        error/simulation.cpp
+
+    HEADERS += \
+        error/simulation.h \
+        error/simulationwidget.h
+}
 
 
 # copy-pasta code deserves to be separated

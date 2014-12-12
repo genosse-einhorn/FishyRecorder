@@ -1,6 +1,20 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+#ifdef QT_NO_DEBUG
+
+#include <QString>
+
+namespace Error {
+    namespace Simulation {
+        static bool SIMULATE(const QString&) {
+            return false;
+        }
+    }
+}
+
+#else
+
 #include <QObject>
 #include <QMap>
 #include <QMutex>
@@ -24,11 +38,6 @@ public:
 
     static Simulation *getInstance();
 
-#ifdef QT_NO_DEBUG
-    static bool SIMULATE(const QString&) {
-        return false;
-    }
-#else
     static bool SIMULATE(const QString& error) {
         auto *sim = Simulation::getInstance();
 
@@ -47,7 +56,6 @@ public:
             return false;
         }
     }
-#endif
 
 signals:
     void simulationChanged(const QString& error, SimulationState simulation);
@@ -63,5 +71,7 @@ private:
 };
 
 } // namespace Error
+
+#endif // QT_NO_DEBUG
 
 #endif // SIMULATION_H

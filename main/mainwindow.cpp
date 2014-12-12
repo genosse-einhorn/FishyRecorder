@@ -67,7 +67,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tabWidget->addTab(m_configPane, tr("Configuration"));
     ui->tabWidget->addTab(m_trackPane, tr("Recording"));
+#ifndef QT_NO_DEBUG
     ui->tabWidget->addTab(new Error::SimulationWidget(this), "Debug");
+#endif
     ui->tabWidget->addTab(new AboutPane(this), tr("About"));
 
     m_configPane->init();

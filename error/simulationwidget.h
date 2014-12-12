@@ -1,6 +1,8 @@
 #ifndef ERROR_SIMULATIONWIDGET_H
 #define ERROR_SIMULATIONWIDGET_H
 
+#ifndef QT_NO_DEBUG
+
 #include "error/simulation.h"
 
 #include <QWidget>
@@ -31,5 +33,7 @@ private:
 };
 
 } // namespace Error
+
+#endif // QT_NO_DEBUG
 
 #endif // ERROR_SIMULATIONWIDGET_H
