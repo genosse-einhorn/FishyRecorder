@@ -33,6 +33,7 @@ signals:
     void monitorDeviceChanged(PaDeviceIndex index);
     void audioDataDirChanged(const QString& dir);
     void availableAudioSpaceChanged(uint64_t freeBytes);
+    void presentationScreenChanged(const QRect& virtualCoordinates);
 
 public slots:
     void displayDeviceError(Error::Provider::ErrorType type, const QString& str1, const QString& str2);
@@ -41,6 +42,7 @@ public slots:
 private slots:
     void recordDevComboChanged(int index);
     void monitorDevComboChanged(int index);
+    void screenComboChanged(int index);
     void audioDataBtnClicked();
     void audioDataFieldChanged();
     void updateAvailableSpace();

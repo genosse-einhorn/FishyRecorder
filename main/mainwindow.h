@@ -18,6 +18,10 @@ namespace Config {
     class Database;
 }
 
+namespace Presentation {
+    class PresentationTab;
+}
+
 class ConfigPane;
 class QuitDialog;
 
@@ -49,6 +53,10 @@ private:
 
     uint64_t m_lastSpaceCheckTime  = 0;
     uint64_t m_lastSpaceCheckSpace = 0;
+
+#ifdef Q_OS_WIN32
+    Presentation::PresentationTab *m_presentation = nullptr;
+#endif
 
     // QWidget interface
 protected:

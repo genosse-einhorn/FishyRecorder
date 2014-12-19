@@ -11,6 +11,10 @@
 #include "main/quitdialog.h"
 #include "main/aboutpane.h"
 
+#ifdef Q_OS_WIN32
+#   include "presentation/presentationtab.h"
+#endif
+
 #include <QDebug>
 #include <QFile>
 #include <QCloseEvent>
@@ -29,6 +33,9 @@ MainWindow::MainWindow(QWidget *parent) :
     m_moverThread(new QThread())
 {
     ui->setupUi(this);
+
+    this->setAttribute(Qt::WA_TranslucentBackground); // WS_LAYERED
+    this->setAttribute(Qt::WA_NoSystemBackground, false);
 
     // setup the thread first
     m_mover->moveToThread(m_moverThread);
@@ -67,6 +74,15 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->tabWidget->addTab(m_configPane, tr("Configuration"));
     ui->tabWidget->addTab(m_trackPane, tr("Recording"));
+
+#ifdef Q_OS_WIN32
+    m_presentation = new Presentation::PresentationTab(this);
+
+    QObject::connect(m_configPane, &ConfigPane::presentationScreenChanged, m_presentation, &Presentation::PresentationTab::screenUpdated);
+
+    ui->tabWidget->addTab(m_presentation, tr("Presentation"));
+#endif
+
 #ifndef QT_NO_DEBUG
     ui->tabWidget->addTab(new Error::SimulationWidget(this), "Debug");
 #endif

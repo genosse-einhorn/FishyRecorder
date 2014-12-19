@@ -4,16 +4,16 @@
 #
 #-------------------------------------------------
 
-QT       += core gui widgets
+QT       += core widgets
 
 CONFIG   += link_pkgconfig c++11
 
-PKGCONFIG += portaudio-2.0
+PKGCONFIG += portaudio-2.0 sqlite3
 
 TARGET   = KuemmelRecorder
 TEMPLATE = app
 
-LIBS += -lsqlite3 -lmp3lame
+LIBS += -lmp3lame
 
 SOURCES += \
     recording/samplemover.cpp \
@@ -37,6 +37,7 @@ SOURCES += \
     main/mainwindow.cpp \
     export/mp3fileexporter.cpp \
     main/aboutpane.cpp
+
 HEADERS += \
     recording/samplemover.h \
     recording/trackcontroller.h \
@@ -69,7 +70,25 @@ FORMS    += \
     main/quitdialog.ui \
     main/aboutpane.ui
 
+win32 {
+    # presentation subsystem is windows only (unfortunately)
+    PKGCONFIG += poppler-qt5
+
+    SOURCES +=  \
+        presentation/presentationtab.cpp \
+        presentation/screenviewcontrol.cpp \
+        external/qwinhost.cpp
+    HEADERS += \
+        presentation/presentationtab.h \
+        presentation/screenviewcontrol.h \
+        external/qwinhost.h
+    FORMS += \
+        presentation/presentationtab.ui
+}
+
 CONFIG(debug, debug|release) {
+    CONFIG += console
+
     SOURCES += \
         error/simulationwidget.cpp \
         error/simulation.cpp

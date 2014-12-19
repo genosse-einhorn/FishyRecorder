@@ -7,6 +7,11 @@
 #include <QStandardPaths>
 #include <QFileDialog>
 #include <QTimer>
+#include <QScreen>
+
+#ifdef Q_OS_WIN32
+#   include <windows.h>
+#endif
 
 ConfigPane::ConfigPane(Config::Database *db, QWidget *parent) :
     QWidget(parent),
@@ -58,6 +63,23 @@ void ConfigPane::init()
     t->setInterval(1000*60*2);
     QObject::connect(t, &QTimer::timeout, this, &ConfigPane::updateAvailableSpace);
     t->start();
+
+#ifdef Q_OS_WIN32
+    QObject::connect(ui->screenCombo, SELECT_SIGNAL_OVERLOAD<int>::OF(&QComboBox::currentIndexChanged), this, &ConfigPane::screenComboChanged);
+
+    for (QScreen* screen : QGuiApplication::screens()) {
+        ui->screenCombo->addItem(
+                    QString("%1 [%2x%3 at %4,%5]")
+                        .arg(screen->name())
+                        .arg(screen->size().width())
+                        .arg(screen->size().height())
+                        .arg(screen->geometry().left())
+                        .arg(screen->geometry().top()),
+                    screen->geometry());
+    }
+#else
+    ui->screenCombo->setEnabled(false);
+#endif
 }
 
 void ConfigPane::displayDeviceError(Error::Provider::ErrorType type, const QString &str1, const QString &str2)
@@ -80,6 +102,12 @@ void ConfigPane::monitorDevComboChanged(int index)
 {
     m_config->writeConfigString("monitor_device", ui->monitorDevCombo->currentText());
     emit monitorDeviceChanged(ui->monitorDevCombo->itemData(index).toInt());
+}
+
+void ConfigPane::screenComboChanged(int index)
+{
+    //TODO: write into config?
+    emit presentationScreenChanged(ui->screenCombo->itemData(index).toRect());
 }
 
 void ConfigPane::audioDataBtnClicked()
