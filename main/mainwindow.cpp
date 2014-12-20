@@ -80,6 +80,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(m_configPane, &ConfigPane::presentationScreenChanged, m_presentation, &Presentation::PresentationTab::screenUpdated);
 
+    QObject::connect(ui->trackNextBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::nextSlide);
+    QObject::connect(ui->nextBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::nextSlide);
+    QObject::connect(ui->prevBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::previousSlide);
+
     ui->tabWidget->addTab(m_presentation, tr("Presentation"));
 #endif
 
@@ -154,11 +158,10 @@ void MainWindow::quitDialogFinished(int result)
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
-    if (m_trackController->getTrackCount()) {
-        ev->ignore();
+    ev->ignore();
 
+    if (m_trackController->getTrackCount())
         m_quitDialog->show();
-    } else {
-        ev->accept();
-    }
+    else
+        quitDialogFinished(QuitDialog::DISCARD_DATA);
 }

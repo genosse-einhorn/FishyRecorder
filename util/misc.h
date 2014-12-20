@@ -2,6 +2,8 @@
 #define MISC_H
 
 #include <QString>
+#include <QDebug>
+#include <chrono>
 
 // credits to https://stackoverflow.com/a/16795664/1331519
 template<typename... Args> struct SELECT_SIGNAL_OVERLOAD {
@@ -10,6 +12,23 @@ template<typename... Args> struct SELECT_SIGNAL_OVERLOAD {
         return pmf;
     }
 };
+
+#ifndef Q_NO_DEBUG
+
+#define MEASURE_TIME(expression) \
+    do { \
+        auto _time_measure__start = std::chrono::steady_clock::now(); \
+        expression; \
+        auto _time_measure__end = std::chrono::steady_clock::now(); \
+        std::chrono::duration<double> _time_measure__diff = _time_measure__end - _time_measure__start; \
+        qDebug() << "TIME:" <<  _time_measure__diff.count() << "seconds for" << #expression; \
+    } while(0)
+
+#else
+
+#define MEASURE_TIME(expression) expression
+
+#endif
 
 namespace Util {
     inline QString formatTime(uint64_t samples) {

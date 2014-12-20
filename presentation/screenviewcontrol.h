@@ -12,6 +12,7 @@ class ScreenViewControl : public QWinHost
     Q_OBJECT
 public:
     explicit ScreenViewControl(QWidget *parent = 0);
+    ~ScreenViewControl();
 
 signals:
 
@@ -23,9 +24,10 @@ private slots:
     void invalidateScreen();
 
 private:
-    QRect   m_screen      = QRect(0, 0, 0, 0);
-    bool    m_magApiReady = false;
-    QTimer* m_resizeTimer = nullptr;
+    QRect   m_screen          = QRect(0, 0, 0, 0);
+    bool    m_magApiReady     = false;
+    QTimer *m_resizeTimer     = nullptr;
+    QTimer *m_invalidateTimer = nullptr;
 
     // QWinHost interface
 protected:

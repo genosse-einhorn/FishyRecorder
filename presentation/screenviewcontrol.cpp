@@ -1,5 +1,7 @@
 #include "screenviewcontrol.h"
 
+#include "util/misc.h"
+
 #include <windows.h>
 #include <QLibrary>
 #include <QDebug>
@@ -15,13 +17,16 @@ typedef struct tagMAGTRANSFORM {
 
 #define MS_SHOWMAGNIFIEDCURSOR 0x0001L
 
-BOOL (*MagInitialize)();
+BOOL (*MagInitialize)() = nullptr;
 BOOL (*MagUninitialize)();
 BOOL (*MagSetWindowSource)(HWND hwnd, RECT rect);
 BOOL (*MagSetWindowTransform)(HWND hwnd, PMAGTRANSFORM pTransform);
 BOOL (*MagSetWindowFilterList)(HWND hwnd, DWORD dwFilterMode, int count, HWND *pHWND);
 
 bool initializeMagnificationApi() {
+    if (MagInitialize)
+        return true;
+
     QLibrary lib("Magnification.dll");
 
     if (!lib.load()) {
@@ -63,9 +68,16 @@ ScreenViewControl::ScreenViewControl(QWidget *parent) :
     m_resizeTimer = new QTimer(this);
     QObject::connect(m_resizeTimer, &QTimer::timeout, this, &ScreenViewControl::doResize);
 
-    QTimer *invalidateTimer = new QTimer(this);
-    QObject::connect(invalidateTimer, &QTimer::timeout, this, &ScreenViewControl::invalidateScreen);
-    invalidateTimer->start(50);
+    m_invalidateTimer = new QTimer(this);
+    QObject::connect(m_invalidateTimer, &QTimer::timeout, this, &ScreenViewControl::invalidateScreen);
+    m_invalidateTimer->setInterval(50);
+    m_invalidateTimer->start();
+}
+
+ScreenViewControl::~ScreenViewControl()
+{
+    if (m_magApiReady)
+        MagUninitialize();
 }
 
 void ScreenViewControl::screenUpdated(const QRect &rect)
@@ -83,11 +95,12 @@ void ScreenViewControl::screenUpdated(const QRect &rect)
 void ScreenViewControl::doResize()
 {
     m_resizeTimer->stop();
+    m_invalidateTimer->start();
 
     if (window())
-        ::SetWindowPos(window(), HWND_TOP, 0, 0, width(), height(), 0);
+        MEASURE_TIME(::SetWindowPos(window(), HWND_TOP, 0, 0, width(), height(), 0));
 
-    if (!m_magApiReady || !m_screen.width())
+    if (!m_magApiReady || !m_screen.width() || !window())
         return;
 
     float factorX = ((float)width()/m_screen.width());
@@ -105,8 +118,8 @@ void ScreenViewControl::doResize()
 
     qDebug() << "Setting transformation factor" << factor;
 
-    MagSetWindowTransform(window(), &transform);
-    MagSetWindowSource(window(), srcRect);
+    MEASURE_TIME(MagSetWindowTransform(window(), &transform));
+    MEASURE_TIME(MagSetWindowSource(window(), srcRect));
 }
 
 void ScreenViewControl::invalidateScreen()
@@ -125,9 +138,10 @@ HWND Presentation::ScreenViewControl::createWindow(HWND parent, HINSTANCE instan
     if (!m_magApiReady)
         return NULL;
 
-    HWND mag = CreateWindow(L"Magnifier", L"MagnifierWindow",
+    HWND mag;
+    MEASURE_TIME(mag = CreateWindow(L"Magnifier", L"MagnifierWindow",
             WS_CHILD | MS_SHOWMAGNIFIEDCURSOR | WS_VISIBLE,
-            this->x(), this->y(), this->width()+this->x(), this->height()+this->y(), parent, NULL, instance, NULL );
+            this->x(), this->y(), this->width()+this->x(), this->height()+this->y(), parent, NULL, instance, NULL ));
 
     return mag;
 }
@@ -138,6 +152,7 @@ void Presentation::ScreenViewControl::resizeEvent(QResizeEvent *ev)
     // skip the window host, but chain up to qwidget right away
     QWidget::resizeEvent(ev);
 
+    m_invalidateTimer->stop();
     m_resizeTimer->stop();
     m_resizeTimer->start(250);
 }
