@@ -21,6 +21,9 @@ public slots:
     void displayError(Error::Provider::ErrorType type, const QString& message1, const QString& message2);
     void clearError();
 
+private slots:
+    void animationFinished();
+
 private:
     QTimer *temporary_error_timer;
     QPropertyAnimation *max_height_anim;
