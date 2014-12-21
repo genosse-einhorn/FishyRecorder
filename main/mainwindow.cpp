@@ -34,8 +34,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+#ifdef Q_OS_WIN32
     this->setAttribute(Qt::WA_TranslucentBackground); // WS_LAYERED
     this->setAttribute(Qt::WA_NoSystemBackground, false);
+#endif
 
     // setup the thread first
     m_mover->moveToThread(m_moverThread);
@@ -154,7 +156,6 @@ void MainWindow::quitDialogFinished(int result)
     // quit
     QCoreApplication::quit();
 }
-
 
 void MainWindow::closeEvent(QCloseEvent *ev)
 {
