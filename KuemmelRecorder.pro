@@ -77,6 +77,8 @@ win32 {
     PKGCONFIG += poppler-qt5 lcms2
     QT += xml
 
+    QT += winextras
+
     SOURCES +=  \
         presentation/presentationtab.cpp \
         presentation/screenviewcontrol.cpp \

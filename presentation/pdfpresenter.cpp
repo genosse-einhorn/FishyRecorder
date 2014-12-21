@@ -9,7 +9,9 @@
 #include <QPixmap>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrent>
+#include <QtWinExtras>
 #include <windows.h>
+#include <math.h>
 #include <memory>
 #include <vector>
 
@@ -43,7 +45,21 @@ namespace {
 
         double res = qMin(xres, yres);
 
-        return QPixmap::fromImage(page->renderToImage(res, res));
+        QImage img = page->renderToImage(res, res);
+
+        //HACK: Poppler will round the coordinates, which might lead to a
+        // single row or column filled with the page background color.
+        // This might be unfortunate if we wanted to display a completely
+        // black page (since the page background is white and can not be
+        // changed since a lot of PDFs expect it to be white). Worst case scenario
+        // is chopping off a completely fine line of pixels.
+        int expected_width = floor(page->pageSizeF().width()*res/72);
+        int expected_height = floor(page->pageSizeF().height()*res/72);
+
+        QPixmap pixmap(expected_width, expected_height);
+        QPainter(&pixmap).drawImage(0, 0, img);
+
+        return pixmap;
     }
 }
 
@@ -124,7 +140,10 @@ void PdfPresenter::updatePresentedPage()
     if (!page)
         return;
 
-    ui->slideList->setCurrentRow(m_currentPageNo);
+    if (ui->slideList->currentRow() != m_currentPageNo) {
+        ui->slideList->setCurrentRow(m_currentPageNo);
+        ui->slideList->scrollToItem(ui->slideList->item(m_currentPageNo), QAbstractItemView::PositionAtCenter);
+    }
 
     if (m_thisPage->isFinished())
         m_presentationImageLbl->setPixmap(m_thisPage->result());
@@ -135,6 +154,11 @@ void PdfPresenter::updatePresentedPage()
 PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
 {
     Poppler::Document *doc = Poppler::Document::load(fileName);
+
+    doc->setRenderHint(Poppler::Document::Antialiasing, true);
+    doc->setRenderHint(Poppler::Document::TextAntialiasing, true);
+    doc->setRenderHint(Poppler::Document::TextHinting, true);
+    doc->setRenderHint(Poppler::Document::TextSlightHinting, true);
 
     if (!doc)
         return nullptr;
@@ -163,6 +187,7 @@ void PdfPresenter::setScreen(const QRect &screen)
     m_presentationWindow = new QWidget();
     m_presentationImageLbl = new QLabel();
 
+    m_presentationImageLbl->setStyleSheet("background-color:black;");
     m_presentationImageLbl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 
     QGridLayout *gridLayout = new QGridLayout(m_presentationWindow);
@@ -170,6 +195,8 @@ void PdfPresenter::setScreen(const QRect &screen)
     gridLayout->addWidget(m_presentationImageLbl, 0, 0, 1, 1, Qt::AlignCenter);
 
     m_presentationWindow->setLayout(gridLayout);
+
+    QtWin::setWindowExcludedFromPeek(m_presentationWindow, true);
 
     // black background
     QPalette pal(m_presentationWindow->palette());
@@ -180,25 +207,16 @@ void PdfPresenter::setScreen(const QRect &screen)
     m_presentationWindow->show();
 
     // now that we have the window, position it
-    m_presentationWindow->setWindowFlags(m_presentationWindow->windowFlags() | Qt::FramelessWindowHint);
+    m_presentationWindow->setWindowFlags(m_presentationWindow->windowFlags() | Qt::FramelessWindowHint | Qt::Tool);
     m_presentationWindow->setWindowState(Qt::WindowFullScreen);
     m_presentationWindow->setGeometry(screen.left(), screen.top(), screen.width(), screen.height());
     m_presentationWindow->setVisible(true);
-    //m_presentationWindow->showFullScreen();
-
-    /*HWND hwnd = (HWND)m_presentationWindow->winId();
-    DWORD dwStyle = GetWindowLong(hwnd, GWL_STYLE);
-    SetWindowLong(hwnd, GWL_STYLE, dwStyle & ~WS_OVERLAPPEDWINDOW);
-    SetWindowPos(hwnd, HWND_TOP,
-                 screen.left(), screen.top(),
-                 screen.width(),
-                 screen.height(),
-                 SWP_NOOWNERZORDER | SWP_FRAMECHANGED);*/
 
     resetPresentationPixmaps();
     updatePresentedPage();
 
-    this->topLevelWidget()->focusWidget();
+    this->focusWidget();
+    this->topLevelWidget()->raise();
 }
 
 void PdfPresenter::nextPage()
