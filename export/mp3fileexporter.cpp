@@ -4,13 +4,13 @@
 
 namespace Export {
 
-Mp3FileExporter::Mp3FileExporter(const Recording::TrackController *controller, const QString& outputDir, QObject *parent) :
-    EncodedFileExporter(controller, outputDir, parent),
+Mp3FileExporter::Mp3FileExporter(QObject *parent) :
+    EncodedFileExporter(parent),
     m_lame_gbf(lame_init())
 {
-    lame_set_quality(m_lame_gbf, 2);
+    lame_set_quality(m_lame_gbf, 5);
     lame_set_mode(m_lame_gbf, JOINT_STEREO);
-    lame_set_brate(m_lame_gbf, 192000);
+    lame_set_brate(m_lame_gbf, 192);
 }
 
 } // namespace Export
@@ -21,10 +21,8 @@ QString Export::Mp3FileExporter::fileExtension()
     return "mp3";
 }
 
-bool Export::Mp3FileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const QString &name)
+bool Export::Mp3FileExporter::beginTrack(QIODevice *output, uint64_t trackLength)
 {
-    Q_UNUSED(name);
-
     if (trackLength >= std::numeric_limits<unsigned long>::max()) {
         m_errorProvider->setError(Error::Provider::ErrorType::Error,
                                   tr("MP3/LAME Error"),

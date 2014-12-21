@@ -35,8 +35,8 @@ struct DataHeader {
 
 namespace Export {
 
-WavFileExporter::WavFileExporter(const Recording::TrackController *controller, const QString &outputDir, QObject *parent) :
-    EncodedFileExporter(controller, outputDir, parent)
+WavFileExporter::WavFileExporter(QObject *parent) :
+    EncodedFileExporter(parent)
 {
 }
 
@@ -45,10 +45,8 @@ QString WavFileExporter::fileExtension()
     return "wav";
 }
 
-bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const QString &name)
+bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength)
 {
-    Q_UNUSED(name);
-
     if (trackLength >= std::numeric_limits<uint32_t>::max()/4) {
         m_errorProvider->setError(Error::Provider::ErrorType::Error,
                                   tr("WAV Error"),

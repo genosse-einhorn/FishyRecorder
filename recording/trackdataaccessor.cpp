@@ -43,7 +43,7 @@ uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
 
         if (bytesRead < 0) {
             m_errorProvider.setError(Error::Provider::ErrorType::Error,
-                                     tr("Could not read track data (inserting silence)"),
+                                     tr("I/O error"),
                                      tr("While reading from `%1': %2").arg(file->fileName()).arg(file->errorString()));
 
             memset(buffer, 0, samplesToRead*4);
@@ -52,7 +52,7 @@ uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
             qDebug() << "Got" << bytesRead << "bytes =" << bytesRead/4 << "samples";
 
             m_errorProvider.setError(Error::Provider::ErrorType::Error,
-                                     tr("Some track data got lost (inserting silence)"),
+                                     tr("I/O error"),
                                      tr("There is data missing in `%1', or some internal data structure has been corrupted.").arg(file->fileName()));
 
             memset(buffer + (bytesRead/4)*4, 0, (samplesToRead - bytesRead/4)*4);
@@ -83,6 +83,12 @@ void TrackDataAccessor::readDataGuaranteed(char *buffer, uint64_t n_samples)
     if (n_samples) {
         memset(buffer, 0, n_samples*4);
     }
+}
+
+void TrackDataAccessor::moveMeToThread(QThread *t)
+{
+    this->setParent(nullptr);
+    this->moveToThread(t);
 }
 
 bool TrackDataAccessor::findOpenAndSeekFileForTrack(uint64_t currentPos, QFile **file, uint64_t *nSamplesFromThisFile)
@@ -120,8 +126,8 @@ bool TrackDataAccessor::findOpenAndSeekFileForTrack(uint64_t currentPos, QFile *
 
         if (fileBefore->error()) {
             m_errorProvider.setError(Error::Provider::ErrorType::Error,
-                                     tr("Could not access data for this track (inserting silence)"),
-                                     tr("Couldn't open file `%1': %2").arg(fileBefore->fileName()).arg(fileBefore->errorString()));
+                                     tr("I/O error"),
+                                     tr("Couldn't access track data: Couldn't open file `%1': %2").arg(fileBefore->fileName()).arg(fileBefore->errorString()));
 
             return false;
         }
@@ -129,7 +135,7 @@ bool TrackDataAccessor::findOpenAndSeekFileForTrack(uint64_t currentPos, QFile *
 
     if (!fileBefore->seek(((qint64)(currentPos - fileBeforePos))*4)) {
         m_errorProvider.setError(Error::Provider::ErrorType::Error,
-                                 tr("Could not access data for this track (inserting silence)"),
+                                 tr("I/O error"),
                                  tr("Could not seek to sample %1 in file `%2': %3").arg(currentPos - fileBeforePos)
                                                                                    .arg(fileBefore->fileName())
                                                                                    .arg(fileBefore->errorString()));

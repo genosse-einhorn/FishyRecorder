@@ -38,6 +38,14 @@ QString Recording::TrackController::getTrackName(unsigned trackIndex) const
     return m_tracks[trackIndex].name;
 }
 
+uint64_t Recording::TrackController::getTrackLength(unsigned trackIndex) const
+{
+    if (trackIndex >= m_tracks.size())
+        return 0;
+
+    return m_tracks[trackIndex].length;
+}
+
 void Recording::TrackController::splitTrack(unsigned trackIndex, uint64_t after_n_samples)
 {
     if (trackIndex >= m_tracks.size())

@@ -24,29 +24,35 @@ class EncodedFileExporter : public QObject
 {
     Q_OBJECT
 public:
-    explicit EncodedFileExporter(const Recording::TrackController *controller, const QString& outputDir, QObject *parent = 0);
+    explicit EncodedFileExporter(QObject *parent = 0);
 
     const Error::Provider *errorProvider() const {
         return m_errorProvider;
     }
 
-signals:
-    void finished();
-    void percentage(double progress);
+    QString trackName() { return m_trackName; }
+    QString albumName() { return m_albumName; }
+
+    void setTrackName(const QString& trackName) { m_trackName = trackName; }
+    void setAlbumName(const QString& albumName) { m_albumName = albumName; }
+
+    void run(Recording::TrackDataAccessor *accessor, QIODevice *outputFile);
+
+    virtual QString fileExtension() = 0;
 
 public slots:
-    void start();
     void abort();
 
+signals:
+    void samplesProcessed(uint64_t numSamples);
+
 private:
-    QString m_outputDir;
-    std::vector<Recording::TrackDataAccessor*> m_trackDataAccessors;
-    bool m_isAborted = false;
+    QString m_trackName;
+    QString m_albumName;
+    bool    m_aborted = false;
 
 protected:
     Error::Provider *m_errorProvider;
-
-    virtual QString fileExtension() = 0;
 
     /*!
      * \brief beginTrack    Starts encoding of a new track.
@@ -59,7 +65,7 @@ protected:
      * nor finishTrack will be called, and the callee is responsible for cleaning up its internal data structures.
      * The given device will be closed by the caller.
      */
-    virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString& name) = 0;
+    virtual bool beginTrack(QIODevice *output, uint64_t trackLength) = 0;
 
     /*!
      * \brief encodeData    Supplies pcm samples to encode.

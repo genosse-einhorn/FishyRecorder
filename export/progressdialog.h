@@ -23,7 +23,7 @@ public:
 public slots:
     void displayError(Error::Provider::ErrorType type, const QString& message1, const QString& message2);
     void setProgress(double progress);
-    void finished(); //! will activate the close button
+    void finished(bool success = true, const QString& message = "Finished."); //! will activate the close button
 
 private slots:
     void cancelButtonClicked();

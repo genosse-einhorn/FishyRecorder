@@ -3,15 +3,17 @@
 
 #include <QDateTime>
 #include <QCloseEvent>
+#include <QStyle>
+#include <QDebug>
 
 namespace Export {
 
 ProgressDialog::ProgressDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::ProgressDialog),
-    warning_icon(":/images/warning.svg"),
-    info_icon(":/images/info.svg"),
-    error_icon(":/images/error.svg")
+    warning_icon(this->style()->standardIcon(QStyle::SP_MessageBoxWarning)),
+    info_icon(this->style()->standardIcon(QStyle::SP_MessageBoxInformation)),
+    error_icon(this->style()->standardIcon(QStyle::SP_MessageBoxCritical))
 {
     ui->setupUi(this);
 
@@ -71,6 +73,8 @@ void ProgressDialog::displayError(Error::Provider::ErrorType type, const QString
     ui->logTable->setItem(ourRow, 0, timeItem);
     ui->logTable->setItem(ourRow, 1, titleItem);
     ui->logTable->setItem(ourRow, 2, textItem);
+
+    ui->logTable->scrollToBottom();
 }
 
 void ProgressDialog::setProgress(double progress)
@@ -78,8 +82,14 @@ void ProgressDialog::setProgress(double progress)
     ui->progressBar->setValue((int)(qBound(0.0d, progress, 1.0d) * (double)std::numeric_limits<int>::max()));
 }
 
-void ProgressDialog::finished()
+void ProgressDialog::finished(bool success, const QString &message)
 {
+    if (success)
+        ui->topIcon->setPixmap(info_icon.pixmap(QSize(16, 16)));
+    else
+        ui->topIcon->setPixmap(error_icon.pixmap(QSize(16, 16)));
+
+    ui->topLbl->setText(message);
     ui->progressBar->setValue(ui->progressBar->maximum());
     ui->cancelBtn->setEnabled(false);
     ui->closeBtn->setEnabled(true);

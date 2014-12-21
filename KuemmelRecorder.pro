@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core widgets
+QT       += core widgets concurrent
 
 CONFIG   += link_pkgconfig c++11
 
@@ -36,7 +36,8 @@ SOURCES += \
     main/main.cpp \
     main/mainwindow.cpp \
     export/mp3fileexporter.cpp \
-    main/aboutpane.cpp
+    main/aboutpane.cpp \
+    export/coordinator.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -59,7 +60,8 @@ HEADERS += \
     error/widget.h \
     main/mainwindow.h \
     export/mp3fileexporter.h \
-    main/aboutpane.h
+    main/aboutpane.h \
+    export/coordinator.h
 
 FORMS    += \
     main/mainwindow.ui \

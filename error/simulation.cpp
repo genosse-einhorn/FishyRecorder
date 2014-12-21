@@ -8,7 +8,8 @@ Error::Simulation::Simulation(QObject *parent) :
         { "writeAudioFile",    SIMULATE_NEVER },
         { "writeAudioBuffer",  SIMULATE_NEVER },
         { "readAudioFile",     SIMULATE_NEVER },
-        { "switchAudioFile",   SIMULATE_NEVER }
+        { "switchAudioFile",   SIMULATE_NEVER },
+        { "slowdownExport",    SIMULATE_NEVER }
     }),
     m_threadSafetySaviour(QMutex::Recursive)
 {

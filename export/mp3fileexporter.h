@@ -12,12 +12,14 @@ class Mp3FileExporter : public Export::EncodedFileExporter
 {
     Q_OBJECT
 public:
-    Mp3FileExporter(const Recording::TrackController *controller, const QString& outputDir, QObject *parent = 0);
+    Mp3FileExporter(QObject *parent = 0);
+
+    static EncodedFileExporter* create() { return new Mp3FileExporter(); }
 
     // EncodedFileExporter interface
 protected:
     virtual QString fileExtension();
-    virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString &name);
+    virtual bool beginTrack(QIODevice *output, uint64_t trackLength);
     virtual bool encodeData(const char *buffer, uint64_t numSamples);
     virtual bool finishTrack();
 

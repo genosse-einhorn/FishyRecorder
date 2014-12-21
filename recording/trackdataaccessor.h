@@ -71,6 +71,14 @@ public:
      */
     void readDataGuaranteed(char *buffer, uint64_t n_samples);
 
+    /*!
+     * \brief moveToThread Moves this object to the passed thread
+     *
+     * Helper function for the exporters which need the accessor to reside in their own thread,
+     * but can't move the object prior to entering their worker thread.
+     */
+    Q_INVOKABLE void moveMeToThread(QThread *t);
+
 private:
     Error::Provider m_errorProvider;
 

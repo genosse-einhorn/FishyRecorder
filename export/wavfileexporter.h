@@ -13,7 +13,9 @@ class WavFileExporter : public EncodedFileExporter
 {
     Q_OBJECT
 public:
-    explicit WavFileExporter(const Recording::TrackController *controller, const QString& ouputDir, QObject *parent = 0);
+    explicit WavFileExporter(QObject *parent = 0);
+
+    static EncodedFileExporter* create() { return new WavFileExporter(); }
 
 signals:
 
@@ -28,7 +30,7 @@ private:
     // EncodedFileExporter interface
 protected:
     virtual QString fileExtension();
-    virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString &name);
+    virtual bool beginTrack(QIODevice *output, uint64_t trackLength);
     virtual bool encodeData(const char *buffer, uint64_t numSamples);
     virtual bool finishTrack();
 };
