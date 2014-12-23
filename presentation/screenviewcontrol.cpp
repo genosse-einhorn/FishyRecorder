@@ -15,6 +15,12 @@ typedef struct tagMAGTRANSFORM {
   float v[3][3];
 } MAGTRANSFORM, *PMAGTRANSFORM;
 
+enum FilterMode
+{
+    MW_FILTERMODE_EXCLUDE = 0,
+    MW_FILTERMODE_INCLUDE = 1
+};
+
 #define MS_SHOWMAGNIFIEDCURSOR 0x0001L
 
 BOOL (*MagInitialize)() = nullptr;
@@ -92,6 +98,16 @@ void ScreenViewControl::screenUpdated(const QRect &rect)
     doResize();
 }
 
+void ScreenViewControl::setExcludedWindow(HWND win)
+{
+    m_excludedWindow = win;
+
+    if (!m_magApiReady || !this->window())
+        return;
+
+    MagSetWindowFilterList(this->window(), MW_FILTERMODE_EXCLUDE, 1, &win);
+}
+
 void ScreenViewControl::doResize()
 {
     m_resizeTimer->stop();
@@ -120,6 +136,7 @@ void ScreenViewControl::doResize()
 
     MEASURE_TIME(MagSetWindowTransform(window(), &transform));
     MEASURE_TIME(MagSetWindowSource(window(), srcRect));
+    MagSetWindowFilterList(this->window(), MW_FILTERMODE_EXCLUDE, 1, &m_excludedWindow);
 }
 
 void ScreenViewControl::invalidateScreen()

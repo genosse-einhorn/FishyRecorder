@@ -3,17 +3,25 @@
 #include "presentation/screenviewcontrol.h"
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
+#include "util/misc.h"
 
 #include <QGridLayout>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
+#include <QLabel>
+#include <QDesktopWidget>
+#include <QAbstractNativeEventFilter>
+#include <QAbstractEventDispatcher>
+
+#include <windows.h>
 
 namespace Presentation {
 
 PresentationTab::PresentationTab(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::PresentationTab)
+    ui(new Ui::PresentationTab),
+    m_overlayWindow(new QLabel(this))
 {
     ui->setupUi(this);
 
@@ -21,6 +29,14 @@ PresentationTab::PresentationTab(QWidget *parent) :
     ui->sidebar->insertWidget(0, m_welcome);
 
     QObject::connect(m_welcome, &WelcomePane::pdfRequested, this, &PresentationTab::openPdf);
+
+    m_overlayWindow->setWindowFlags(Qt::Window | Qt::Tool | Qt::FramelessWindowHint);
+    m_overlayWindow->setAttribute(Qt::WA_ShowWithoutActivating);
+    m_overlayWindow->setStyleSheet("background-color: black");
+    m_overlayWindow->setAutoFillBackground(true);
+    m_overlayWindow->setCursor(Qt::BlankCursor);
+
+    ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
 }
 
 PresentationTab::~PresentationTab()
@@ -32,9 +48,60 @@ void PresentationTab::screenUpdated(const QRect &screen)
 {
     ui->screenView->screenUpdated(screen);
 
+    // reposition the blank window
+    m_overlayWindow->setGeometry(screen.x(), screen.y(), screen.width(), screen.height());
+
+    HWND hwnd = (HWND)m_overlayWindow->winId();
+    ::SetWindowPos(hwnd, HWND_TOPMOST, -1, -1, -1, -1, SWP_NOACTIVATE | SWP_NOMOVE);
+
     emit sigScreenChange(screen);
 
     m_currentScreen = screen;
+}
+
+void PresentationTab::blank(bool blank)
+{
+    if (!blank)
+        return clear();
+
+    Util::BooleanFlagSetter raiiFlag(&this->m_whileSettingOverlay);
+
+    QPixmap p(m_currentScreen.width(), m_currentScreen.height());
+    p.fill(Qt::black);
+    m_overlayWindow->setPixmap(p);
+    m_overlayWindow->show();
+
+    emit freezeChanged(false);
+    emit blankChanged(true);
+}
+
+void PresentationTab::freeze(bool freeze)
+{
+    if (!freeze)
+        return clear();
+
+    Util::BooleanFlagSetter raiiFlag(&this->m_whileSettingOverlay);
+
+    m_overlayWindow->setPixmap(QPixmap::grabWindow(QApplication::desktop()->winId(),
+                                                   m_currentScreen.x(),
+                                                   m_currentScreen.y(),
+                                                   m_currentScreen.width(),
+                                                   m_currentScreen.height()));
+    m_overlayWindow->show();
+
+    emit blankChanged(false);
+    emit freezeChanged(true);
+}
+
+void PresentationTab::clear()
+{
+    if (m_whileSettingOverlay)
+        return;
+
+    m_overlayWindow->hide();
+
+    emit freezeChanged(false);
+    emit blankChanged(false);
 }
 
 void PresentationTab::openPdf()

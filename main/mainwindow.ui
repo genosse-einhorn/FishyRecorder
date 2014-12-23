@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>723</width>
+    <width>813</width>
     <height>476</height>
    </rect>
   </property>
@@ -247,6 +247,9 @@
          </property>
          <property name="shortcut">
           <string>F</string>
+         </property>
+         <property name="checkable">
+          <bool>true</bool>
          </property>
         </widget>
        </item>

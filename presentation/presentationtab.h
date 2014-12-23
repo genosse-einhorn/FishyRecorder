@@ -3,6 +3,8 @@
 
 #include <QWidget>
 
+class QLabel;
+
 namespace Presentation {
 
 namespace Ui {
@@ -24,10 +26,18 @@ signals:
     void sigNextSlide();
     void sigPreviousSlide();
 
+    void freezeChanged(bool freezing);
+    void blankChanged(bool isBlank);
+
 public slots:
     void screenUpdated(const QRect& screen);
     void previousSlide() { emit sigPreviousSlide(); }
     void nextSlide() { emit sigNextSlide(); }
+
+    // screen blanking
+    void blank(bool blank = true);
+    void freeze(bool freeze = true);
+    void clear();
 
 private slots:
     void openPdf();
@@ -35,6 +45,9 @@ private slots:
 private:
     Ui::PresentationTab *ui;
     WelcomePane *m_welcome;
+
+    QLabel  *m_overlayWindow;
+    bool     m_whileSettingOverlay = false;
 
     QRect m_currentScreen { 0, 0, 0, 0 };
 };

@@ -59,6 +59,25 @@ namespace Util {
     private:
         Q_DISABLE_COPY(SignalBlocker)
     };
+
+    class BooleanFlagSetter {
+        bool *m_flagPtr;
+
+    public:
+        inline BooleanFlagSetter(bool *flagPtr) : m_flagPtr(flagPtr)
+        {
+            if (m_flagPtr)
+                *m_flagPtr = true;
+        }
+
+        inline ~BooleanFlagSetter() {
+            if (m_flagPtr)
+                *m_flagPtr = false;
+        }
+
+    private:
+        Q_DISABLE_COPY(BooleanFlagSetter)
+    };
 }
 
 #endif // MISC_H

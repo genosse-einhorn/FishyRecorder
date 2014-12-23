@@ -93,6 +93,10 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->trackNextBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::nextSlide);
     QObject::connect(ui->nextBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::nextSlide);
     QObject::connect(ui->prevBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::previousSlide);
+    QObject::connect(ui->freezeBtn, &QAbstractButton::toggled, m_presentation, &Presentation::PresentationTab::freeze);
+    QObject::connect(ui->blankBtn, &QAbstractButton::toggled, m_presentation, &Presentation::PresentationTab::blank);
+    QObject::connect(m_presentation, &Presentation::PresentationTab::freezeChanged, ui->freezeBtn, &QAbstractButton::setChecked);
+    QObject::connect(m_presentation, &Presentation::PresentationTab::blankChanged, ui->blankBtn, &QAbstractButton::setChecked);
 
     ui->tabWidget->addTab(m_presentation, tr("Presentation"));
 #endif

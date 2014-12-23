@@ -18,6 +18,7 @@ signals:
 
 public slots:
     void screenUpdated(const QRect& rect);
+    void setExcludedWindow(HWND win);
 
 private slots:
     void doResize();
@@ -28,6 +29,7 @@ private:
     bool    m_magApiReady     = false;
     QTimer *m_resizeTimer     = nullptr;
     QTimer *m_invalidateTimer = nullptr;
+    HWND    m_excludedWindow  = 0;
 
     // QWinHost interface
 protected:
