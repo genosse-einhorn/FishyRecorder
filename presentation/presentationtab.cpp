@@ -13,6 +13,7 @@
 #include <QDesktopWidget>
 #include <QAbstractNativeEventFilter>
 #include <QAbstractEventDispatcher>
+#include <QtWinExtras>
 
 #include <windows.h>
 
@@ -35,6 +36,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
     m_overlayWindow->setStyleSheet("background-color: black");
     m_overlayWindow->setAutoFillBackground(true);
     m_overlayWindow->setCursor(Qt::BlankCursor);
+    QtWin::setWindowExcludedFromPeek(m_overlayWindow, true);
 
     ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
 }
@@ -52,7 +54,7 @@ void PresentationTab::screenUpdated(const QRect &screen)
     m_overlayWindow->setGeometry(screen.x(), screen.y(), screen.width(), screen.height());
 
     HWND hwnd = (HWND)m_overlayWindow->winId();
-    ::SetWindowPos(hwnd, HWND_TOPMOST, -1, -1, -1, -1, SWP_NOACTIVATE | SWP_NOMOVE);
+    ::SetWindowPos(hwnd, HWND_TOPMOST, screen.x(), screen.y(), screen.width(), screen.height(), SWP_NOACTIVATE);
 
     emit sigScreenChange(screen);
 
