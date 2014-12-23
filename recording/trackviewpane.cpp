@@ -26,6 +26,7 @@ TrackViewPane::TrackViewPane(TrackController *controller, QWidget *parent) :
     m_trackView->setColumnHidden(0, true);
     m_trackView->horizontalHeader()->moveSection(1, 3);
     m_trackView->horizontalHeader()->setStretchLastSection(true);
+    m_trackView->setFrameStyle(QFrame::NoFrame);
 
     QObject::connect(m_trackView->selectionModel(), &QItemSelectionModel::selectionChanged, this, &TrackViewPane::selectedRowChanged);
 
@@ -50,6 +51,8 @@ TrackViewPane::TrackViewPane(TrackController *controller, QWidget *parent) :
     rightPaneScroll->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     rightPaneScroll->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOn);
     rightPaneScroll->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::MinimumExpanding);
+    rightPaneScroll->setFrameStyle(QFrame::NoFrame);
+    rightPaneScroll->setBackgroundRole(QPalette::Window);
 
     // create the final layout
     QGridLayout *layout = new QGridLayout(this);

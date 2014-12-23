@@ -7,9 +7,11 @@ QuitDialog::QuitDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QObject::connect(ui->abortBtn,   &QAbstractButton::clicked, this, &QuitDialog::abortClicked);
+    QObject::connect(ui->buttonBox,   &QDialogButtonBox::rejected, this, &QDialog::reject);
     QObject::connect(ui->discardBtn, &QAbstractButton::clicked, this, &QuitDialog::discardClicked);
     QObject::connect(ui->keepBtn,    &QAbstractButton::clicked, this, &QuitDialog::keepClicked);
+
+    ui->topPart->setBackgroundRole(QPalette::Base);
 }
 
 QuitDialog::~QuitDialog()

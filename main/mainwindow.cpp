@@ -19,6 +19,8 @@
 #include <QFile>
 #include <QCloseEvent>
 #include <QThread>
+#include <QCommonStyle>
+#include <QShortcut>
 #include <portaudio.h>
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -69,6 +71,12 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(m_quitDialog, &QDialog::finished, this, &MainWindow::quitDialogFinished);
 
+    // the designer can't set multiple shortcuts, so we'll do it ourselves
+    QShortcut *nextSlideDown = new QShortcut(QKeySequence("Down"), this);
+    QObject::connect(nextSlideDown, &QShortcut::activated, ui->nextBtn, &QAbstractButton::click);
+    QShortcut *prevSlideUp = new QShortcut(QKeySequence("Up"), this);
+    QObject::connect(prevSlideUp, &QShortcut::activated, ui->prevBtn, &QAbstractButton::click);
+
     ui->levelL->setMinimum(0);
     ui->levelL->setMaximum(std::numeric_limits<int16_t>::max());
     ui->levelR->setMinimum(0);
@@ -93,6 +101,72 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tabWidget->addTab(new Error::SimulationWidget(this), "Debug");
 #endif
     ui->tabWidget->addTab(new AboutPane(this), tr("About"));
+
+
+    // == Main styling ==
+    QPalette pal = this->palette();
+    pal.setBrush(QPalette::Background, QColor(0x40, 0x40, 0x40));
+    pal.setBrush(QPalette::Foreground, QColor(0xFF, 0xFF, 0xFF));
+    pal.setBrush(QPalette::Light, QColor(0x60, 0x60, 0x60));
+    this->setPalette(pal);
+    this->setAutoFillBackground(true);
+
+    // == tab widget styling ==
+    // We use a normal QTabWidget, but style the tabs according
+    // to our "custom theme" using CSS
+    ui->tabWidget->setPalette(QGuiApplication::palette());
+    for (int i = 0; i < ui->tabWidget->count(); ++i) {
+        QWidget *w = ui->tabWidget->widget(i);
+        w->setAutoFillBackground(true);
+        w->setBackgroundRole(QPalette::Base);
+        w->setPalette(QGuiApplication::palette());
+    }
+    ui->tabWidget->setStyleSheet(QString(
+        "QTabBar::tab {"
+        "   background-color: %1;"
+        "   color: %2;"
+        "   padding: 10px;"
+        "   border: 0;"
+        "   margin-left: 5px;"
+        "}"
+        "QTabBar::tab:selected {"
+        "   background-color: %3;"
+        "   color: %4;"
+        "   margin-left: 0;"
+        "}"
+        "QTabWidget::pane {"
+        "  border: 0"
+        "}"
+    ).arg(this->palette().color(QPalette::Light).name())
+     .arg(this->palette().color(QPalette::Foreground).name())
+     .arg(ui->tabWidget->palette().color(QPalette::Base).name())
+     .arg(ui->tabWidget->palette().color(QPalette::Text).name()));
+
+    // == bottom button styling ==
+    // This can be easily done via style sheets, saving us from subclassing QPushButton
+    ui->bottomButtonBox->setStyleSheet(QString(
+        "QPushButton {"
+        "   background-color: %1;"
+        "   color: %2;"
+        "   border: 1px solid %3;"
+        "   outline: 0;"
+        "   padding: 2px 10px;"
+        "}"
+        "QPushButton:pressed, QPushButton:checked {"
+        "   background-color: %2;"
+        "   color: %1;"
+        "   border-color: %2;"
+        "}"
+        "QPushButton:hover {"
+        "   background-color: %3;"
+        "}"
+        "QPushButton:checked:hover, QPushButton:pressed:hover {"
+        "   border-color: %3;"
+        "   background-color: %2;"
+        "}"
+    ).replace("%1", this->palette().color(QPalette::Window).name())
+     .replace("%2", this->palette().color(QPalette::Foreground).name())
+     .replace("%3", this->palette().color(QPalette::Light).name()));
 
     m_configPane->init();
 }

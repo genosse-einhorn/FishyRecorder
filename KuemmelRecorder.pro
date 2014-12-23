@@ -37,7 +37,8 @@ SOURCES += \
     main/mainwindow.cpp \
     export/mp3fileexporter.cpp \
     main/aboutpane.cpp \
-    export/coordinator.cpp
+    export/coordinator.cpp \
+    main/fancyprogressbar.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -61,7 +62,8 @@ HEADERS += \
     main/mainwindow.h \
     export/mp3fileexporter.h \
     main/aboutpane.h \
-    export/coordinator.h
+    export/coordinator.h \
+    main/fancyprogressbar.h
 
 FORMS    += \
     main/mainwindow.ui \
