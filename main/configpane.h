@@ -46,6 +46,8 @@ private slots:
     void audioDataBtnClicked();
     void audioDataFieldChanged();
     void updateAvailableSpace();
+    void screenAdded(QScreen *screen);
+    void screenRemoved(QScreen *screen);
 
 private:
     Ui::ConfigPane   *ui;

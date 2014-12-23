@@ -128,15 +128,30 @@ void PresentationTab::openPdf()
         return;
     }
 
-    presenter->setScreen(m_currentScreen);
     QObject::connect(presenter, &PdfPresenter::closeRequested, presenter, &QObject::deleteLater);
+    QObject::connect(presenter, &PdfPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
 
     QObject::connect(this, &PresentationTab::sigNextSlide, presenter, &PdfPresenter::nextPage);
     QObject::connect(this, &PresentationTab::sigPreviousSlide, presenter, &PdfPresenter::previousPage);
     QObject::connect(this, &PresentationTab::sigScreenChange, presenter, &PdfPresenter::setScreen);
 
+    QObject::connect(presenter, &PdfPresenter::canNextPageChanged, this, &PresentationTab::slotCanNextSlideChanged);
+    QObject::connect(presenter, &PdfPresenter::canPrevPageChanged, this, &PresentationTab::slotCanPrevSlideChanged);
+
+    presenter->setScreen(m_currentScreen);
+
     int index = ui->sidebar->insertWidget(-1, presenter);
     ui->sidebar->setCurrentIndex(index);
+}
+
+void PresentationTab::slotCanNextSlideChanged(bool can)
+{
+    emit canNextSlideChanged(can);
+}
+
+void PresentationTab::slotCanPrevSlideChanged(bool can)
+{
+    emit canPrevSlideChanged(can);
 }
 
 } // namespace Presentation

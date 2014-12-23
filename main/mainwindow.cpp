@@ -7,6 +7,7 @@
 #include "error/simulationwidget.h"
 #include "config/database.h"
 #include "util/misc.h"
+#include "util/boolsignalor.h"
 #include "main/configpane.h"
 #include "main/quitdialog.h"
 #include "main/aboutpane.h"
@@ -60,12 +61,19 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_mover, &Recording::SampleMover::timeUpdate, this, &MainWindow::timeUpdate);
     QObject::connect(m_mover, &Recording::SampleMover::levelMeterUpdate, this, &MainWindow::levelMeterUpdate);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, ui->recordBtn, &QAbstractButton::setChecked);
+    QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, ui->trackBtn, &QAbstractButton::setEnabled);
+    QObject::connect(m_mover, &Recording::SampleMover::canMonitorChanged, ui->monitorBtn, &QAbstractButton::setEnabled);
     QObject::connect(m_mover->getDeviceErrorProvider(), &Error::Provider::error, m_configPane, &ConfigPane::displayDeviceError);
     QObject::connect(m_mover->getRecordingErrorProvider(), &Error::Provider::error, ui->recordingErrorDisplay, &Error::Widget::displayError);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, m_configPane, &ConfigPane::recordingStateChanged);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, m_trackController, &Recording::TrackController::onRecordingStateChanged);
     QObject::connect(m_mover, &Recording::SampleMover::newRecordingFile, m_trackController, &Recording::TrackController::onRecordingFileChanged);
     QObject::connect(m_mover, &Recording::SampleMover::timeUpdate, m_trackController, &Recording::TrackController::onTimeUpdate);
+    QObject::connect(m_mover, &Recording::SampleMover::canRecordChanged, ui->recordBtn, &QAbstractButton::setEnabled);
+
+    Util::BoolSignalOr *trackAndNextBtnEnabler = new Util::BoolSignalOr(this);
+    QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, trackAndNextBtnEnabler, &Util::BoolSignalOr::inputA);
+    QObject::connect(trackAndNextBtnEnabler, &Util::BoolSignalOr::output, ui->trackNextBtn, &QAbstractButton::setEnabled);
 
     QObject::connect(m_trackController, &Recording::TrackController::currentTrackTimeChanged, this, &MainWindow::trackTimeUpdate);
 
@@ -97,6 +105,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(ui->blankBtn, &QAbstractButton::toggled, m_presentation, &Presentation::PresentationTab::blank);
     QObject::connect(m_presentation, &Presentation::PresentationTab::freezeChanged, ui->freezeBtn, &QAbstractButton::setChecked);
     QObject::connect(m_presentation, &Presentation::PresentationTab::blankChanged, ui->blankBtn, &QAbstractButton::setChecked);
+    QObject::connect(m_presentation, &Presentation::PresentationTab::canNextSlideChanged, ui->nextBtn, &QAbstractButton::setEnabled);
+    QObject::connect(m_presentation, &Presentation::PresentationTab::canNextSlideChanged, trackAndNextBtnEnabler, &Util::BoolSignalOr::inputB);
+    QObject::connect(m_presentation, &Presentation::PresentationTab::canPrevSlideChanged, ui->prevBtn, &QAbstractButton::setEnabled);
+
+    ui->freezeBtn->setEnabled(true);
+    ui->blankBtn->setEnabled(true);
 
     ui->tabWidget->addTab(m_presentation, tr("Presentation"));
 #endif
@@ -150,11 +164,14 @@ MainWindow::MainWindow(QWidget *parent) :
     // This can be easily done via style sheets, saving us from subclassing QPushButton
     ui->bottomButtonBox->setStyleSheet(QString(
         "QPushButton {"
-        "   background-color: %1;"
+        "   background-color: %3;"
         "   color: %2;"
         "   border: 1px solid %3;"
         "   outline: 0;"
         "   padding: 2px 10px;"
+        "}"
+        "QPushButton:!enabled {"
+        "   background-color: %1;"
         "}"
         "QPushButton:pressed, QPushButton:checked {"
         "   background-color: %2;"
@@ -162,7 +179,7 @@ MainWindow::MainWindow(QWidget *parent) :
         "   border-color: %2;"
         "}"
         "QPushButton:hover {"
-        "   background-color: %3;"
+        "   border-color: %2;"
         "}"
         "QPushButton:checked:hover, QPushButton:pressed:hover {"
         "   border-color: %3;"

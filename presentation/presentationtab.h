@@ -28,6 +28,8 @@ signals:
 
     void freezeChanged(bool freezing);
     void blankChanged(bool isBlank);
+    void canNextSlideChanged(bool can);
+    void canPrevSlideChanged(bool can);
 
 public slots:
     void screenUpdated(const QRect& screen);
@@ -41,6 +43,9 @@ public slots:
 
 private slots:
     void openPdf();
+    void slotCanNextSlideChanged(bool can);
+    void slotCanPrevSlideChanged(bool can);
+    void slotNoSlides() { slotCanNextSlideChanged(false); slotCanPrevSlideChanged(false); }
 
 private:
     Ui::PresentationTab *ui;

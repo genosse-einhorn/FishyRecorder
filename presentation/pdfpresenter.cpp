@@ -133,6 +133,9 @@ void PdfPresenter::imageFinished()
 
 void PdfPresenter::updatePresentedPage()
 {
+    setCanPrevPage(m_currentPageNo > 0);
+    setCanNextPage(m_currentPageNo < m_pdf->numPages()-1);
+
     if (!m_presentationWindow || !m_presentationImageLbl)
         return;
 
@@ -167,7 +170,6 @@ PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
     presenter->m_pdf.reset(doc);
 
     presenter->kickoffPreviewList();
-    presenter->updatePresentedPage();
 
     return presenter;
 }

@@ -48,11 +48,20 @@ public:
         return recording_flag != RecordingState::STOP_ACCEPTED;
     }
 
+    bool canRecord() {
+        return m_canRecord;
+    }
+    bool canMonitor() {
+        return m_canMonitor;
+    }
+
 signals:
     void levelMeterUpdate(int16_t left, int16_t right);
     void timeUpdate(uint64_t recorded_samples);
     void recordingStateChanged(bool recording, uint64_t total_recorded_sample_count);
     void newRecordingFile(const QString& filePath, uint64_t starting_from_sample_count);
+    void canRecordChanged(bool canRecord);
+    void canMonitorChanged(bool canMonitor);
 
 public slots:
     void setInputDevice(PaDeviceIndex device = paNoDevice);
@@ -152,6 +161,23 @@ private:
 
     QTemporaryFile *currentFile          = nullptr;
     QString         currentDataDirectory = QString();
+
+    bool m_canRecord = false;
+    void setCanRecord(bool can)
+    {
+        if (can != m_canRecord) {
+            m_canRecord = can;
+            emit canRecordChanged(can);
+        }
+    }
+    bool m_canMonitor = false;
+    void setCanMonitor(bool can)
+    {
+        if (can != m_canMonitor) {
+            m_canMonitor = can;
+            emit canMonitorChanged(can);
+        }
+    }
 
 public:
     ~SampleMover();

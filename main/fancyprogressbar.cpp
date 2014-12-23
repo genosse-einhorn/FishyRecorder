@@ -24,7 +24,6 @@ void FancyProgressBar::paintEvent(QPaintEvent *)
 
     QPainter painter(this);
 
-    painter.setPen(palette().color(palette().currentColorGroup(), QPalette::Light));
-    painter.drawRect(0, 0, width()-1, height()-1);
+    painter.fillRect(0, 0, width(), height(), palette().brush(palette().currentColorGroup(), QPalette::Light));
     painter.fillRect(0, 0, boxWidth, height(), palette().brush(palette().currentColorGroup(), QPalette::Foreground));
 }

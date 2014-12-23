@@ -182,6 +182,9 @@ Recording::SampleMover::reopenStream()
         level_r = 0;
     }
 
+    setCanRecord(false);
+    setCanMonitor(false);
+
     PaStreamParameters input_params;
     PaStreamParameters monitor_params;
     const PaDeviceInfo *info;
@@ -238,6 +241,11 @@ Recording::SampleMover::reopenStream()
             deviceErrorProvider->clearError();
         }
     }
+
+    if (input_device != paNoDevice && stream && Pa_IsStreamActive(stream))
+        setCanRecord(true);
+    if (monitor_device != paNoDevice && stream && Pa_IsStreamActive(stream))
+        setCanMonitor(true);
 }
 
 void Recording::SampleMover::emergencyShutdown()

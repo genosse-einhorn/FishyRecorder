@@ -29,6 +29,12 @@ public:
 
 signals:
     void closeRequested();
+    void canNextPageChanged(bool can);
+    void canPrevPageChanged(bool can);
+
+public:
+    bool canNextPage() { return m_canNextPage; }
+    bool canPrevPage() { return m_canPrevPage; }
 
 public slots:
     void setScreen(const QRect& screen);
@@ -62,6 +68,21 @@ private:
     QFutureWatcher<QPixmap> *m_prevPage = nullptr;
 
     int m_currentPageNo = 0;
+
+    bool m_canNextPage = false;
+    bool m_canPrevPage = false;
+    void setCanNextPage(bool can) {
+        if (m_canNextPage != can) {
+            m_canNextPage = can;
+            emit canNextPageChanged(can);
+        }
+    }
+    void setCanPrevPage(bool can) {
+        if (m_canPrevPage != can) {
+            m_canPrevPage = can;
+            emit canPrevPageChanged(can);
+        }
+    }
 };
 
 
