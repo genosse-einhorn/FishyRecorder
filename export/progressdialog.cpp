@@ -108,10 +108,10 @@ void ProgressDialog::closeButtonClicked()
 
 void ProgressDialog::closeEvent(QCloseEvent *event)
 {
+    event->ignore();
+
     if (ui->closeBtn->isEnabled())
-        event->accept();
-    else
-        event->ignore();
+        ui->closeBtn->click();
 }
 
 } // namespace Export
