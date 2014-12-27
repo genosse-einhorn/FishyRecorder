@@ -225,7 +225,7 @@ void Presentation::ScreenViewControl::showEvent(QShowEvent *e)
     QWidget::showEvent(e);
 
     m_invalidateTimer->start();
-    ::ShowWindow(m_hostWindow, SW_SHOW);
+    ::ShowWindow(m_hostWindow, SW_SHOWNOACTIVATE);
 }
 
 void Presentation::ScreenViewControl::hideEvent(QHideEvent *e)
@@ -234,4 +234,15 @@ void Presentation::ScreenViewControl::hideEvent(QHideEvent *e)
 
     m_invalidateTimer->stop();
     ::ShowWindow(m_hostWindow, SW_HIDE);
+}
+
+void Presentation::ScreenViewControl::focusInEvent(QFocusEvent *ev)
+{
+    QWidget::focusInEvent(ev);
+}
+
+
+bool Presentation::ScreenViewControl::nativeEvent(const QByteArray &eventType, void *message, long *result)
+{
+    return QWidget::nativeEvent(eventType, message, result);
 }

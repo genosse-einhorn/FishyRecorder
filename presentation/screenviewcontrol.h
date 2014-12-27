@@ -43,6 +43,8 @@ protected:
     virtual void resizeEvent(QResizeEvent *);
     virtual void showEvent(QShowEvent *);
     virtual void hideEvent(QHideEvent *);
+    virtual void focusInEvent(QFocusEvent *);
+    virtual bool nativeEvent(const QByteArray &eventType, void *message, long *result);
 };
 
 } // namespace Presentation
