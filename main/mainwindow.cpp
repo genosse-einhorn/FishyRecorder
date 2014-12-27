@@ -123,9 +123,9 @@ MainWindow::MainWindow(QWidget *parent) :
 
     // == Main styling ==
     QPalette pal = this->palette();
-    pal.setBrush(QPalette::Background, QColor(0x40, 0x40, 0x40));
+    pal.setBrush(QPalette::Background, QColor(0x30, 0x30, 0x30));
     pal.setBrush(QPalette::Foreground, QColor(0xFF, 0xFF, 0xFF));
-    pal.setBrush(QPalette::Light, QColor(0x60, 0x60, 0x60));
+    pal.setBrush(QPalette::Light, QColor(0x40, 0x40, 0x40));
     this->setPalette(pal);
     this->setAutoFillBackground(true);
 
