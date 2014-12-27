@@ -38,6 +38,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
     m_overlayWindow->setCursor(Qt::BlankCursor);
     QtWin::setWindowExcludedFromPeek(m_overlayWindow, true);
 
+    //FIXME: doesn't really seem to work, have to call again
     ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
 }
 
@@ -73,6 +74,9 @@ void PresentationTab::blank(bool blank)
     m_overlayWindow->setPixmap(p);
     m_overlayWindow->show();
 
+    // ensure exclusion
+    ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
+
     emit freezeChanged(false);
     emit blankChanged(true);
 }
@@ -90,6 +94,9 @@ void PresentationTab::freeze(bool freeze)
                                                    m_currentScreen.width(),
                                                    m_currentScreen.height()));
     m_overlayWindow->show();
+
+    // ensure exclusion
+    ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
 
     emit blankChanged(false);
     emit freezeChanged(true);
