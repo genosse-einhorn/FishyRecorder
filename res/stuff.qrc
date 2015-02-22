@@ -6,5 +6,6 @@
     </qresource>
     <qresource prefix="/">
         <file>DejaVuSans.ttf</file>
+        <file>screenview-x86.dll</file>
     </qresource>
 </RCC>
