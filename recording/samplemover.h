@@ -62,10 +62,12 @@ signals:
     void newRecordingFile(const QString& filePath, uint64_t starting_from_sample_count);
     void canRecordChanged(bool canRecord);
     void canMonitorChanged(bool canMonitor);
+    void latencyChanged(double min, double max, double value);
 
 public slots:
     void setInputDevice(PaDeviceIndex device = paNoDevice);
     void setMonitorDevice(PaDeviceIndex device = paNoDevice);
+    void setConfiguredLatency(double latency);
     void startRecording();
     void stopRecording();
     void setRecordingState(bool);
@@ -104,6 +106,10 @@ private:
     // we need to know the other device we just selected before
     int input_device   = paNoDevice;
     int monitor_device = paNoDevice;
+
+    // We configure just one latency shared among both devices
+    // This isn't really correct, but it makes life easier for users
+    double m_configured_latency = 1000000000000;
 
     // The ringbuffer is conveniently lock-free
     PaUtilRingBuffer ringbuffer;

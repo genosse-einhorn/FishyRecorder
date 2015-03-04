@@ -26,6 +26,7 @@ ProgressDialog::ProgressDialog(QWidget *parent) :
     ui->logTable->horizontalHeader()->setSectionResizeMode(QHeaderView::ResizeToContents);
     ui->logTable->horizontalHeader()->setStretchLastSection(true);
     ui->logTable->setTextElideMode(Qt::ElideNone);
+    ui->logTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
     ui->cancelBtn->setEnabled(true);
     ui->closeBtn->setEnabled(false);

@@ -23,6 +23,7 @@ public:
     };
 
     QString readConfigString(const QString& key, const QString& fallbackValue = QString());
+    double  readConfigDouble(const QString& key, double fallbackValue = NAN);
     std::vector<Track> readAllTracks();
     std::map<uint64_t,QString> readAllFiles();
     uint64_t readTotalSamplesRecorded();
@@ -31,6 +32,7 @@ signals:
 
 public slots:
     void writeConfigString(const QString& key, const QString& value);
+    void writeConfigDouble(const QString& key, double value);
     void insertTrack(uint64_t start, uint64_t length, const QString& name);
     void appendFile(uint64_t start, const QString& file);
     void updateTrackLength(uint64_t trackStart, uint64_t newLength);

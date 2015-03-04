@@ -57,6 +57,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_configPane, &ConfigPane::monitorDeviceChanged, m_trackPane, &Recording::TrackViewPane::setMonitorDevice);
     QObject::connect(m_configPane, &ConfigPane::availableAudioSpaceChanged, this, &MainWindow::availableSpaceUpdate);
     QObject::connect(m_configPane, &ConfigPane::audioDataDirChanged, m_mover, &Recording::SampleMover::setAudioDataDir);
+    QObject::connect(m_configPane, &ConfigPane::latencyChanged, m_mover, &Recording::SampleMover::setConfiguredLatency);
 
     QObject::connect(m_mover, &Recording::SampleMover::timeUpdate, this, &MainWindow::timeUpdate);
     QObject::connect(m_mover, &Recording::SampleMover::levelMeterUpdate, this, &MainWindow::levelMeterUpdate);
@@ -70,6 +71,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_mover, &Recording::SampleMover::newRecordingFile, m_trackController, &Recording::TrackController::onRecordingFileChanged);
     QObject::connect(m_mover, &Recording::SampleMover::timeUpdate, m_trackController, &Recording::TrackController::onTimeUpdate);
     QObject::connect(m_mover, &Recording::SampleMover::canRecordChanged, ui->recordBtn, &QAbstractButton::setEnabled);
+    QObject::connect(m_mover, &Recording::SampleMover::latencyChanged, m_configPane, &ConfigPane::handleLatencyChanged);
 
     Util::BoolSignalOr *trackAndNextBtnEnabler = new Util::BoolSignalOr(this);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, trackAndNextBtnEnabler, &Util::BoolSignalOr::inputA);
@@ -136,8 +138,8 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < ui->tabWidget->count(); ++i) {
         QWidget *w = ui->tabWidget->widget(i);
         w->setAutoFillBackground(true);
-        w->setBackgroundRole(QPalette::Base);
         w->setPalette(QGuiApplication::palette());
+        w->setBackgroundRole(QPalette::Base);
     }
     ui->tabWidget->setStyleSheet(QString(
         "QTabBar::tab {"

@@ -3,6 +3,8 @@
 #include "error/provider.h"
 #include "error/simulation.h"
 
+#include "util/portaudio.h"
+
 #include <QDebug>
 #include <QTimer>
 #include <QtEndian>
@@ -93,8 +95,6 @@ Recording::SampleMover::stream_callback(const void *input,
     default:
         Q_UNREACHABLE();
     }
-
-
 
     return paContinue;
 }
@@ -190,9 +190,12 @@ Recording::SampleMover::reopenStream()
     const PaDeviceInfo *info;
     PaError err;
 
+    double min_latency = 0;
+    double max_latency = std::numeric_limits<double>::max();
+    Util::PortAudio::latencyBounds(input_device, monitor_device, &min_latency, &max_latency);
+
     if (input_device != paNoDevice) {
         info = Pa_GetDeviceInfo(input_device);
-
         if (!info) {
             deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Invalid input device seleted"), tr("It is a programmer mistake to let this happen."));
             return;
@@ -202,13 +205,7 @@ Recording::SampleMover::reopenStream()
         input_params.channelCount = 2;
         input_params.sampleFormat = paInt16;
         input_params.hostApiSpecificStreamInfo = nullptr;
-        input_params.suggestedLatency = info->defaultHighInputLatency;
-        //FIXME: We'd really like to use low latency, but if we request that,
-        // even the developer machine will go nuts if one tries to play a video
-        // in the background. Might be an Alsa/Pulseaudio/Portaudio problem tough,
-        // so we should check with a Win7 machine and may decide to ignore the problem.
-        // It's a shame Portaudio can't automatically adjust the latency to avoid
-        // the CPU utilization on the fly.
+        input_params.suggestedLatency = qBound(info->defaultLowInputLatency, m_configured_latency, info->defaultHighInputLatency);
     }
 
     if (monitor_device != paNoDevice) {
@@ -223,7 +220,7 @@ Recording::SampleMover::reopenStream()
         monitor_params.channelCount = 2;
         monitor_params.sampleFormat = paInt16;
         monitor_params.hostApiSpecificStreamInfo = nullptr;
-        monitor_params.suggestedLatency = info->defaultHighOutputLatency;
+        monitor_params.suggestedLatency = qBound(info->defaultLowOutputLatency, m_configured_latency, info->defaultHighOutputLatency);
     }
 
     PaStreamParameters *input_params_ptr   = input_device   != paNoDevice ? &input_params   : nullptr;
@@ -246,6 +243,8 @@ Recording::SampleMover::reopenStream()
         setCanRecord(true);
     if (monitor_device != paNoDevice && stream && Pa_IsStreamActive(stream))
         setCanMonitor(true);
+    if (stream && Pa_IsStreamActive(stream))
+        latencyChanged(min_latency, max_latency, qBound(min_latency, m_configured_latency, max_latency));
 }
 
 void Recording::SampleMover::emergencyShutdown()
@@ -332,6 +331,16 @@ void
 Recording::SampleMover::setMonitorDevice(PaDeviceIndex device)
 {
     monitor_device = device;
+
+    reopenStream();
+}
+
+void Recording::SampleMover::setConfiguredLatency(double latency)
+{
+    if (m_configured_latency == latency)
+        return;
+
+    m_configured_latency = latency;
 
     reopenStream();
 }

@@ -39,7 +39,8 @@ SOURCES += \
     main/aboutpane.cpp \
     export/coordinator.cpp \
     main/fancyprogressbar.cpp \
-    util/boolsignalor.cpp
+    util/boolsignalor.cpp \
+    util/portaudio.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -65,7 +66,8 @@ HEADERS += \
     main/aboutpane.h \
     export/coordinator.h \
     main/fancyprogressbar.h \
-    util/boolsignalor.h
+    util/boolsignalor.h \
+    util/portaudio.h
 
 FORMS    += \
     main/mainwindow.ui \

@@ -181,8 +181,7 @@ QString Database::readConfigString(const QString &key, const QString &fallbackVa
         return fallbackValue;
     }
 
-    auto key_u8 = key.toUtf8();
-    result = sqlite3_bind_text(stmt, 1, key_u8.constData(), -1, SQLITE_TRANSIENT);
+    result = sqlite3_bind_text16(stmt, 1, key.utf16(), -1, SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
 
@@ -191,7 +190,7 @@ QString Database::readConfigString(const QString &key, const QString &fallbackVa
 
     result = sqlite3_step(stmt);
     if (result == SQLITE_ROW) {
-        retval = QString::fromUtf8((const char*)sqlite3_column_text(stmt, 0));
+        retval = QString::fromUtf16((const ushort*)sqlite3_column_text16(stmt, 0));
     } else if (result == SQLITE_DONE) {
         // value not found - default is already set
     } else {
@@ -205,6 +204,43 @@ finished:
         return retval;
     else
         return fallbackValue;
+}
+
+double Database::readConfigDouble(const QString &key, double fallbackValue)
+{
+    if (!m_db || !key.size())
+        return fallbackValue;
+
+    int result;
+    sqlite3_stmt *stmt   = nullptr;
+    double        retval = fallbackValue;
+
+    result = sqlite3_prepare_v2(m_db, "SELECT val FROM config WHERE key = :key", -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+        return fallbackValue;
+    }
+
+    result = sqlite3_bind_text16(stmt, 1, key.utf16(), -1, SQLITE_TRANSIENT);
+    if (result != SQLITE_OK) {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+
+        goto finished;
+    }
+
+    result = sqlite3_step(stmt);
+    if (result == SQLITE_ROW) {
+        retval = sqlite3_column_double(stmt, 0);
+    } else if (result == SQLITE_DONE) {
+        // value not found - default is already set
+    } else {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+    }
+
+finished:
+    sqlite3_finalize(stmt);
+
+    return retval;
 }
 
 std::vector<Database::Track> Database::readAllTracks()
@@ -322,17 +358,52 @@ void Database::writeConfigString(const QString &key, const QString &value)
         return;
     }
 
-    auto key_u8 = key.toUtf8();
-    auto val_u8 = value.toUtf8();
-
-    result = sqlite3_bind_text(stmt, 1, key_u8.constData(), -1, SQLITE_TRANSIENT);
+    result = sqlite3_bind_text16(stmt, 1, key.utf16(), -1, SQLITE_TRANSIENT);
     if (result != SQLITE_OK) {
         qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
 
         goto finished;
     }
 
-    result = sqlite3_bind_text(stmt, 2, val_u8.constData(), -1, SQLITE_TRANSIENT);
+    result = sqlite3_bind_text16(stmt, 2, value.utf16(), -1, SQLITE_TRANSIENT);
+    if (result != SQLITE_OK) {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+
+        goto finished;
+    }
+
+    result = sqlite3_step(stmt);
+    if (result != SQLITE_DONE) {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+    }
+
+finished:
+    sqlite3_finalize(stmt);
+}
+
+void Database::writeConfigDouble(const QString &key, double value)
+{
+    if (!m_db || !key.size())
+        return;
+
+    int result;
+    sqlite3_stmt *stmt = nullptr;
+
+    result = sqlite3_prepare_v2(m_db, "INSERT OR REPLACE INTO config VALUES(:key, :val)", -1, &stmt, nullptr);
+    if (result != SQLITE_OK) {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+
+        return;
+    }
+
+    result = sqlite3_bind_text16(stmt, 1, key.utf16(), -1, SQLITE_TRANSIENT);
+    if (result != SQLITE_OK) {
+        qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
+
+        goto finished;
+    }
+
+    result = sqlite3_bind_double(stmt, 2, value);
     if (result != SQLITE_OK) {
         qWarning() << "SQL error:" << sqlite3_errmsg(m_db);
 
