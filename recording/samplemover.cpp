@@ -29,7 +29,7 @@ Recording::SampleMover::stream_callback(const void *input,
     if (statusFlags & paInputUnderflow)
         qWarning() << "FIXME: Input underflowed (WTF?)";
 
-    // well, we don't really care enough for the monitor to handle it's status codes
+    // well, we don't really care enough for the monitor to handle its status codes
 
     if (input) {
         int16_t *samples = (int16_t *)input;
@@ -37,55 +37,55 @@ Recording::SampleMover::stream_callback(const void *input,
         // FIXME: should we do the level calculation outside the callback?
         // is the simplified code worth the added latency?
         for (unsigned long i = 0; i < frameCount; ++i) {
-            mover->temp_level_l = qMax(mover->temp_level_l, qAbs(qFromLittleEndian(samples[2*i + 0])));
-            mover->temp_level_r = qMax(mover->temp_level_r, qAbs(qFromLittleEndian(samples[2*i + 1])));
+            mover->m_tempLevelL = qMax(mover->m_tempLevelL, qAbs(qFromLittleEndian(samples[2*i + 0])));
+            mover->m_tempLevelR = qMax(mover->m_tempLevelR, qAbs(qFromLittleEndian(samples[2*i + 1])));
         }
 
-        mover->temp_level_sample_count += frameCount;
+        mover->m_tempLevelSampleCount += frameCount;
 
-        if (mover->temp_level_sample_count >= 2000) {
-            mover->level_l = mover->temp_level_l;
-            mover->level_r = mover->temp_level_r;
-            mover->temp_level_sample_count = 0;
-            mover->temp_level_l = 0;
-            mover->temp_level_r = 0;
+        if (mover->m_tempLevelSampleCount >= 2000) {
+            mover->m_level_l = mover->m_tempLevelL;
+            mover->m_level_r = mover->m_tempLevelR;
+            mover->m_tempLevelSampleCount = 0;
+            mover->m_tempLevelL = 0;
+            mover->m_tempLevelR = 0;
         }
     }
 
-    if (output && input && mover->monitor_enabled) {
+    if (output && input && mover->m_monitorEnabled) {
         memcpy(output, input, frameCount * 4);
     } else if (output) {
         memset(output, 0, frameCount * 4);
     }
 
-    RecordingState rec = mover->recording_flag;
+    RecordingState rec = mover->m_recordingFlag;
     switch (rec) {
     case RecordingState::START:
         if (input) {
-            auto samples_written = PaUtil_WriteRingBuffer(&mover->ringbuffer, input, frameCount);
+            auto samples_written = PaUtil_WriteRingBuffer(&mover->m_ringbuffer, input, frameCount);
 
             if ((intmax_t)samples_written != (intmax_t)frameCount)
                 qDebug() << "Dropped samples because ringbuffer is full!? Tried to save " << frameCount << ", saved " << samples_written;
 
-            mover->recorded_sample_count += samples_written;
+            mover->m_recordedSampleCount += samples_written;
         } else {
             // we still have the obligation to fill the ringbuffer, so we'll fill it with silence
             //HACK: If we don't have input, we can be certain to have an output pointer that is already filled
             // with zeroes from the memset above. We use this as source for the PaUtil_WriteRingbuffer call.
-            auto samples_written = PaUtil_WriteRingBuffer(&mover->ringbuffer, output, frameCount);
+            auto samples_written = PaUtil_WriteRingBuffer(&mover->m_ringbuffer, output, frameCount);
 
             if ((intmax_t)samples_written != (intmax_t)frameCount) {
                 qDebug() << "Dropped samples because ringbuffer is full!? Tried to save " << frameCount << ", saved " << samples_written;
-                mover->dropping_samples = true;
+                mover->m_droppingSamples = true;
             } else {
-                mover->dropping_samples = false;
+                mover->m_droppingSamples = false;
             }
 
-            mover->recorded_sample_count += samples_written;
+            mover->m_recordedSampleCount += samples_written;
         }
         break;
     case RecordingState::STOP_REQUESTED:
-        mover->recording_flag = RecordingState::STOP_ACCEPTED;
+        mover->m_recordingFlag = RecordingState::STOP_ACCEPTED;
 
         // fall through
     case RecordingState::STOP_ACCEPTED:
@@ -100,17 +100,17 @@ Recording::SampleMover::stream_callback(const void *input,
 }
 
 Recording::SampleMover::SampleMover(uint64_t samplesAlreadyRecorded, QObject *parent) :
-    QObject(parent), recorded_sample_count(samplesAlreadyRecorded)
+    QObject(parent), m_recordedSampleCount(samplesAlreadyRecorded)
 {
     Pa_Initialize();
 
-    PaUtil_InitializeRingBuffer(&ringbuffer, 4, 1<<18, ringbuffer_data);
+    PaUtil_InitializeRingBuffer(&m_ringbuffer, 4, 1<<18, m_ringbuffer_data);
 
-    deviceErrorProvider    = new Error::Provider(this);
-    recordingErrorProvider = new Error::Provider(this);
+    m_deviceErrorProvider    = new Error::Provider(this);
+    m_recordingErrorProvider = new Error::Provider(this);
 
-    QObject::connect(deviceErrorProvider, &Error::Provider::error, this, &SampleMover::deviceError);
-    QObject::connect(recordingErrorProvider, &Error::Provider::error, this, &SampleMover::recordingError);
+    QObject::connect(m_deviceErrorProvider,    &Error::Provider::error, this, &SampleMover::deviceError);
+    QObject::connect(m_recordingErrorProvider, &Error::Provider::error, this, &SampleMover::recordingError);
 
     setInputDevice();
 
@@ -123,23 +123,23 @@ Recording::SampleMover::SampleMover(uint64_t samplesAlreadyRecorded, QObject *pa
 void
 Recording::SampleMover::reportState()
 {
-    if (recording_flag != RecordingState::STOP_ACCEPTED) {
+    if (m_recordingFlag != RecordingState::STOP_ACCEPTED) {
         int32_t buffer[1024];
         ring_buffer_size_t read;
 
-        while ((read = PaUtil_ReadRingBuffer(&ringbuffer, buffer, 1024))) {
-            auto written = currentFile->write((char *)buffer, (qint64)read*4);
+        while ((read = PaUtil_ReadRingBuffer(&m_ringbuffer, buffer, 1024))) {
+            auto written = m_currentFile->write((char *)buffer, (qint64)read*4);
 
             if (written > 0)
-                written_sample_count += written/4;
+                m_writtenSampleCount += written/4;
 
             if (written != read*4 || Error::Simulation::SIMULATE("writeAudioFile")) {
                 if (written == read*4)
-                    recordingErrorProvider->simulate(Error::Provider::ErrorType::Error, "writeAudioFile");
+                    m_recordingErrorProvider->simulate(Error::Provider::ErrorType::Error, "writeAudioFile");
                 else
-                    recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
+                    m_recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
                                                      tr("Could not write recorded data to file"),
-                                                     tr("While writing to `%1': %2").arg(currentFile->fileName()).arg(currentFile->errorString()));
+                                                     tr("While writing to `%1': %2").arg(m_currentFile->fileName()).arg(m_currentFile->errorString()));
 
                 emergencyShutdown();
                 return;
@@ -147,31 +147,32 @@ Recording::SampleMover::reportState()
         }
 
         // check if we are in danger of hitting the FAT32 file size limit
-        if (written_sample_count*4 >= 2000000000 || Error::Simulation::SIMULATE("switchAudioFile")) {
+        if (m_writtenSampleCount*4 >= 2000000000 || Error::Simulation::SIMULATE("switchAudioFile")) {
             if (!openRecordingFile())
                 emergencyShutdown();
         }
     }
 
-    if (this->dropping_samples)
-        recordingErrorProvider->setError(Error::Provider::ErrorType::TemporaryWarning,
+    if (this->m_droppingSamples)
+        m_recordingErrorProvider->setError(Error::Provider::ErrorType::TemporaryWarning,
                                          tr("Audio data needed to be dropped"),
                                          tr("Your computer cannot process audio data fast enough. Please reduce your system load or buy new hardware."));
 
     // report conditions to the user interface
-    emit levelMeterUpdate(level_l, level_r);
-    emit timeUpdate(recorded_sample_count);
+    emit levelMeterUpdate(m_level_l, m_level_r);
+    emit timeUpdate(m_recordedSampleCount);
 }
 
 void
 Recording::SampleMover::reopenStream()
 {
-    if (stream) {
-        Pa_StopStream(stream);
-        Pa_CloseStream(stream);
-        stream = nullptr;
-        level_l = 0;
-        level_r = 0;
+    if (m_stream) {
+        Pa_StopStream(m_stream);
+        Pa_CloseStream(m_stream);
+        m_stream = nullptr;
+        m_level_l = 0;
+        m_level_r = 0;
+        emit levelMeterUpdate(m_level_l, m_level_r);
     }
 
     setCanRecord(false);
@@ -184,128 +185,128 @@ Recording::SampleMover::reopenStream()
 
     double min_latency = 0;
     double max_latency = std::numeric_limits<double>::max();
-    Util::PortAudio::latencyBounds(input_device, monitor_device, &min_latency, &max_latency);
+    Util::PortAudio::latencyBounds(m_inputDevice, m_monitorDevice, &min_latency, &max_latency);
 
-    if (input_device != paNoDevice) {
-        info = Pa_GetDeviceInfo(input_device);
+    if (m_inputDevice != paNoDevice) {
+        info = Pa_GetDeviceInfo(m_inputDevice);
         if (!info) {
-            deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Invalid input device seleted"), tr("It is a programmer mistake to let this happen."));
+            m_deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Invalid input device seleted"), tr("It is a programmer mistake to let this happen."));
             return;
         }
 
-        input_params.device = input_device;
+        input_params.device = m_inputDevice;
         input_params.channelCount = 2;
         input_params.sampleFormat = paInt16;
         input_params.hostApiSpecificStreamInfo = nullptr;
-        input_params.suggestedLatency = qBound(info->defaultLowInputLatency, m_configured_latency, info->defaultHighInputLatency);
+        input_params.suggestedLatency = qBound(info->defaultLowInputLatency, m_configuredLatency, info->defaultHighInputLatency);
     }
 
-    if (monitor_device != paNoDevice) {
-        info = Pa_GetDeviceInfo(monitor_device);
+    if (m_monitorDevice != paNoDevice) {
+        info = Pa_GetDeviceInfo(m_monitorDevice);
 
         if (!info) {
-            deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Invalid monitor device seleted"), tr("It is a programmer mistake to let this happen."));
+            m_deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Invalid monitor device seleted"), tr("It is a programmer mistake to let this happen."));
             return;
         }
 
-        monitor_params.device = monitor_device;
+        monitor_params.device = m_monitorDevice;
         monitor_params.channelCount = 2;
         monitor_params.sampleFormat = paInt16;
         monitor_params.hostApiSpecificStreamInfo = nullptr;
-        monitor_params.suggestedLatency = qBound(info->defaultLowOutputLatency, m_configured_latency, info->defaultHighOutputLatency);
+        monitor_params.suggestedLatency = qBound(info->defaultLowOutputLatency, m_configuredLatency, info->defaultHighOutputLatency);
     }
 
-    PaStreamParameters *input_params_ptr   = input_device   != paNoDevice ? &input_params   : nullptr;
-    PaStreamParameters *monitor_params_ptr = monitor_device != paNoDevice ? &monitor_params : nullptr;
+    PaStreamParameters *input_params_ptr   = m_inputDevice   != paNoDevice ? &input_params   : nullptr;
+    PaStreamParameters *monitor_params_ptr = m_monitorDevice != paNoDevice ? &monitor_params : nullptr;
 
     if (input_params_ptr || monitor_params_ptr) {
-        err = Pa_OpenStream(&stream, input_params_ptr, monitor_params_ptr, 44100, paFramesPerBufferUnspecified, paNoFlag, stream_callback, this);
+        err = Pa_OpenStream(&m_stream, input_params_ptr, monitor_params_ptr, 44100, paFramesPerBufferUnspecified, paNoFlag, stream_callback, this);
 
         if (Error::Simulation::SIMULATE("openAudioStream")) {
-            deviceErrorProvider->simulate(Error::Provider::ErrorType::Error, "openAudioStream");
+            m_deviceErrorProvider->simulate(Error::Provider::ErrorType::Error, "openAudioStream");
         } else if (err != paNoError) {
-            deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Could not open device(s)"), Pa_GetErrorText(err));
+            m_deviceErrorProvider->setError(Error::Provider::ErrorType::Error, tr("Could not open device(s)"), Pa_GetErrorText(err));
         } else {
-            Pa_StartStream(stream);
-            deviceErrorProvider->clearError();
+            Pa_StartStream(m_stream);
+            m_deviceErrorProvider->clearError();
         }
     }
 
-    if (input_device != paNoDevice && stream && Pa_IsStreamActive(stream))
+    if (m_inputDevice != paNoDevice && m_stream && Pa_IsStreamActive(m_stream))
         setCanRecord(true);
-    if (monitor_device != paNoDevice && stream && Pa_IsStreamActive(stream))
+    if (m_monitorDevice != paNoDevice && m_stream && Pa_IsStreamActive(m_stream))
         setCanMonitor(true);
-    if (stream && Pa_IsStreamActive(stream))
-        latencyChanged(min_latency, max_latency, qBound(min_latency, m_configured_latency, max_latency));
+    if (m_stream && Pa_IsStreamActive(m_stream))
+        latencyChanged(min_latency, max_latency, qBound(min_latency, m_configuredLatency, max_latency));
 }
 
 void Recording::SampleMover::emergencyShutdown()
 {
-    if (stream && Pa_IsStreamActive(stream)) {
+    if (m_stream && Pa_IsStreamActive(m_stream)) {
         auto expected = RecordingState::START;
-        if (recording_flag.compare_exchange_strong(expected, RecordingState::STOP_REQUESTED)) {
+        if (m_recordingFlag.compare_exchange_strong(expected, RecordingState::STOP_REQUESTED)) {
             // now spinlock until the stop has been accepted
             // this should only take a few milliseconds.
             //FIXME: is this guaranteed not to block the callback thread?
-            while (recording_flag != RecordingState::STOP_ACCEPTED)
+            while (m_recordingFlag != RecordingState::STOP_ACCEPTED)
                 ; //spin
 
             // drain the ringbuffer
             int32_t buffer[1024];
             ring_buffer_size_t read;
 
-            while ((read = PaUtil_ReadRingBuffer(&ringbuffer, buffer, 1024)))
+            while ((read = PaUtil_ReadRingBuffer(&m_ringbuffer, buffer, 1024)))
                 ;
 
             // silently roll back the recorded counter
-            recorded_sample_count = current_file_started_at + written_sample_count;
+            m_recordedSampleCount = m_currentFileStartedAt + m_writtenSampleCount;
         } else {
             qWarning() << "Trying to stop recording while it is not running.";
             return;
         }
     } else {
         // If we have no currently active stream, for whatever reason, we obviously can't ask it to stop.
-        recording_flag = RecordingState::STOP_ACCEPTED;
+        m_recordingFlag = RecordingState::STOP_ACCEPTED;
     }
 
-    if (currentFile) {
-        currentFile->close();
-        delete currentFile;
-        currentFile = nullptr;
+    if (m_currentFile) {
+        m_currentFile->close();
+        delete m_currentFile;
+        m_currentFile = nullptr;
     }
 
-    emit timeUpdate(recorded_sample_count);
-    emit recordingStateChanged(false, recorded_sample_count);
+    emit timeUpdate(m_recordedSampleCount);
+    emit recordingStateChanged(false, m_recordedSampleCount);
 }
 
 bool Recording::SampleMover::openRecordingFile()
 {
-    if (currentFile) {
-        currentFile->close();
-        delete currentFile;
+    if (m_currentFile) {
+        m_currentFile->close();
+        delete m_currentFile;
     }
 
-    currentFile = new QTemporaryFile(QString("%1/recorder-data-XXXXXX").arg(currentDataDirectory), this);
-    currentFile->setAutoRemove(false);
-    currentFile->open();
+    m_currentFile = new QTemporaryFile(QString("%1/recorder-data-XXXXXX").arg(m_currentDataDirectory), this);
+    m_currentFile->setAutoRemove(false);
+    m_currentFile->open();
 
-    if (currentFile->error()) {
-        recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
+    if (m_currentFile->error()) {
+        m_recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
                                          tr("Couldn't open file to save recorded data"),
-                                         tr("While opening `%1': %2").arg(currentFile->fileName()).arg(currentFile->errorString()));
+                                         tr("While opening `%1': %2").arg(m_currentFile->fileName()).arg(m_currentFile->errorString()));
 
         return false;
     } else if (Error::Simulation::SIMULATE("openAudioDataFile")) {
-        recordingErrorProvider->simulate(Error::Provider::ErrorType::Error, "openAudioDataFile");
+        m_recordingErrorProvider->simulate(Error::Provider::ErrorType::Error, "openAudioDataFile");
 
         return false;
     } else {
-        qDebug() << "Old file began at " << current_file_started_at << ", has written " << written_sample_count << "samples";
+        qDebug() << "Old file began at " << m_currentFileStartedAt << ", has written " << m_writtenSampleCount << "samples";
 
-        current_file_started_at += written_sample_count;
-        written_sample_count = 0;
+        m_currentFileStartedAt += m_writtenSampleCount;
+        m_writtenSampleCount = 0;
 
-        emit newRecordingFile(currentFile->fileName(), current_file_started_at);
+        emit newRecordingFile(m_currentFile->fileName(), m_currentFileStartedAt);
 
         return true;
     }
@@ -314,7 +315,7 @@ bool Recording::SampleMover::openRecordingFile()
 void
 Recording::SampleMover::setInputDevice(PaDeviceIndex device)
 {
-    input_device = device;
+    m_inputDevice = device;
 
     reopenStream();
 }
@@ -322,17 +323,17 @@ Recording::SampleMover::setInputDevice(PaDeviceIndex device)
 void
 Recording::SampleMover::setMonitorDevice(PaDeviceIndex device)
 {
-    monitor_device = device;
+    m_monitorDevice = device;
 
     reopenStream();
 }
 
 void Recording::SampleMover::setConfiguredLatency(double latency)
 {
-    if (m_configured_latency == latency)
+    if (m_configuredLatency == latency)
         return;
 
-    m_configured_latency = latency;
+    m_configuredLatency = latency;
 
     reopenStream();
 }
@@ -340,14 +341,14 @@ void Recording::SampleMover::setConfiguredLatency(double latency)
 void
 Recording::SampleMover::setMonitorEnabled(bool enabled)
 {
-    monitor_enabled = enabled;
+    m_monitorEnabled = enabled;
 }
 
 void Recording::SampleMover::setAudioDataDir(const QString &dir)
 {
-    currentDataDirectory = dir;
+    m_currentDataDirectory = dir;
 
-    if (recording_flag == RecordingState::STOP_ACCEPTED)
+    if (m_recordingFlag == RecordingState::STOP_ACCEPTED)
         return;
 
     // reopen a file in the new directory right now because the user might have
@@ -359,23 +360,23 @@ void Recording::SampleMover::setAudioDataDir(const QString &dir)
 void
 Recording::SampleMover::startRecording()
 {
-    if (recording_flag != RecordingState::STOP_ACCEPTED) {
+    if (m_recordingFlag != RecordingState::STOP_ACCEPTED) {
         qWarning() << "Trying to start recording while it is already running.";
     } else {
-        PaUtil_FlushRingBuffer(&ringbuffer);
+        PaUtil_FlushRingBuffer(&m_ringbuffer);
 
-        if (current_file_started_at + written_sample_count != recorded_sample_count) {
+        if (m_currentFileStartedAt + m_writtenSampleCount != m_recordedSampleCount) {
             qWarning() << "Discrepancy between recorded and written sample count. Correcting.";
-            written_sample_count = 0;
-            current_file_started_at = recorded_sample_count;
+            m_writtenSampleCount = 0;
+            m_currentFileStartedAt = m_recordedSampleCount;
         }
 
         if (openRecordingFile()) {
-            recording_flag = RecordingState::START;
+            m_recordingFlag = RecordingState::START;
 
-            emit recordingStateChanged(true, recorded_sample_count);
+            emit recordingStateChanged(true, m_recordedSampleCount);
         } else {
-            emit recordingStateChanged(false, recorded_sample_count);
+            emit recordingStateChanged(false, m_recordedSampleCount);
         }
     }
 }
@@ -383,29 +384,29 @@ Recording::SampleMover::startRecording()
 void
 Recording::SampleMover::stopRecording()
 {
-    if (stream && Pa_IsStreamActive(stream)) {
+    if (m_stream && Pa_IsStreamActive(m_stream)) {
         auto expected = RecordingState::START;
-        if (recording_flag.compare_exchange_strong(expected, RecordingState::STOP_REQUESTED)) {
+        if (m_recordingFlag.compare_exchange_strong(expected, RecordingState::STOP_REQUESTED)) {
             // now spinlock until the stop has been accepted
             // this should only take a few milliseconds.
             //FIXME: is this guaranteed not to block the callback thread?
-            while (recording_flag != RecordingState::STOP_ACCEPTED)
+            while (m_recordingFlag != RecordingState::STOP_ACCEPTED)
                 ; //spin
 
             // drain the ringbuffer to file
             int32_t buffer[1024];
             ring_buffer_size_t read;
 
-            while ((read = PaUtil_ReadRingBuffer(&ringbuffer, buffer, 1024))) {
-                auto written = currentFile->write((char *)buffer, (qint64)read * 4);
+            while ((read = PaUtil_ReadRingBuffer(&m_ringbuffer, buffer, 1024))) {
+                auto written = m_currentFile->write((char *)buffer, (qint64)read * 4);
 
                 if (written > 0)
-                    written_sample_count += written/4;
+                    m_writtenSampleCount += written/4;
 
                 if (written != read * 4) {
-                    recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
+                    m_recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
                                                      tr("Could not write recorded data to file"),
-                                                     tr("While writing to `%1': %2").arg(currentFile->fileName()).arg(currentFile->errorString()));
+                                                     tr("While writing to `%1': %2").arg(m_currentFile->fileName()).arg(m_currentFile->errorString()));
 
                     emergencyShutdown();
                     return;
@@ -420,16 +421,16 @@ Recording::SampleMover::stopRecording()
         }
     } else {
         // If we have no currently active stream, for whatever reason, we obviously can't ask it to stop.
-        recording_flag = RecordingState::STOP_ACCEPTED;
+        m_recordingFlag = RecordingState::STOP_ACCEPTED;
     }
 
-    currentFile->close();
-    delete currentFile;
-    currentFile = nullptr;
+    m_currentFile->close();
+    delete m_currentFile;
+    m_currentFile = nullptr;
 
-    qDebug() << "Written samples: " << current_file_started_at + written_sample_count << "Recorded samples: " << recorded_sample_count;
+    qDebug() << "Written samples: " << m_currentFileStartedAt + m_writtenSampleCount << "Recorded samples: " << m_recordedSampleCount;
 
-    emit recordingStateChanged(false, recorded_sample_count);
+    emit recordingStateChanged(false, m_recordedSampleCount);
 }
 
 void Recording::SampleMover::setRecordingState(bool recording)
@@ -445,16 +446,16 @@ void Recording::SampleMover::setRecordingState(bool recording)
 
 Recording::SampleMover::~SampleMover()
 {
-    if (stream) {
-        Pa_StopStream(stream);
-        Pa_CloseStream(stream);
+    if (m_stream) {
+        Pa_StopStream(m_stream);
+        Pa_CloseStream(m_stream);
     }
 
     Pa_Terminate();
 }
 
 uint64_t
-Recording::SampleMover::getRecordedSampleCount()
+Recording::SampleMover::recordedSampleCount()
 {
-    return recorded_sample_count;
+    return m_recordedSampleCount;
 }

@@ -22,11 +22,10 @@ public:
     using ErrorType = Error::Provider::ErrorType;
 
     explicit SampleMover(uint64_t samplesAlreadyRecorded, QObject *parent = 0);
+    ~SampleMover();
 
     //! this function is explicitly thread-safe
-    uint64_t getRecordedSampleCount();
-
-
+    uint64_t recordedSampleCount();
 
 signals:
     /*!
@@ -48,9 +47,9 @@ signals:
     void recordingError(ErrorType severity, const QString& message1, const QString& message2);
 
     void levelMeterUpdate(int16_t left, int16_t right);
-    void timeUpdate(uint64_t recorded_samples);
-    void recordingStateChanged(bool recording, uint64_t total_recorded_sample_count);
-    void newRecordingFile(const QString& filePath, uint64_t starting_from_sample_count);
+    void timeUpdate(uint64_t recordedSamples);
+    void recordingStateChanged(bool recording, uint64_t totalRecordedSampleCount);
+    void newRecordingFile(const QString& filePath, uint64_t startingFromSampleCount);
     void canRecordChanged(bool canRecord);
     void canMonitorChanged(bool canMonitor);
     void latencyChanged(double min, double max, double value);
@@ -77,7 +76,7 @@ private:
                                void *userData);
 
     bool recordingState() {
-        return recording_flag != RecordingState::STOP_ACCEPTED;
+        return m_recordingFlag != RecordingState::STOP_ACCEPTED;
     }
 
     //! (Re)open the recording stream after a device has been changed
@@ -92,35 +91,35 @@ private:
     //! Will try to open and set the recording file. Returns whether it succeeds.
     bool openRecordingFile();
 
-    PaStream *stream = nullptr;
+    PaStream *m_stream = nullptr;
 
-    Error::Provider *deviceErrorProvider    = nullptr;
-    Error::Provider *recordingErrorProvider = nullptr;
+    Error::Provider *m_deviceErrorProvider    = nullptr;
+    Error::Provider *m_recordingErrorProvider = nullptr;
 
     // The devices - if we have to reopen the stream because one device changed,
     // we need to know the other device we just selected before
-    int input_device   = paNoDevice;
-    int monitor_device = paNoDevice;
+    int m_inputDevice   = paNoDevice;
+    int m_monitorDevice = paNoDevice;
 
     // We configure just one latency shared among both devices
     // This isn't really correct, but it makes life easier for users
-    double m_configured_latency = 1000000000000;
+    double m_configuredLatency = 1000000000000;
 
     // The ringbuffer is conveniently lock-free
-    PaUtilRingBuffer ringbuffer;
-    char             ringbuffer_data[2<<20]; // roughly 5 seconds of data
+    PaUtilRingBuffer m_ringbuffer;
+    char             m_ringbuffer_data[2<<20]; // roughly 5 seconds of data
 
     // These are std::atomic so both the portaudio callback.
     // And regular class members can safely access them.
-    std::atomic<int16_t> level_l { 0 }; // = 0 is not well liked at all :(
-    std::atomic<int16_t> level_r { 0 };
+    std::atomic<int16_t> m_level_l { 0 }; // = 0 is not well liked at all :(
+    std::atomic<int16_t> m_level_r { 0 };
 
     // The temporary level calculations are only done by the callback
     // and not supposed to be expected or interfered with by the
     // other running code
-    int16_t temp_level_l = 0;
-    int16_t temp_level_r = 0;
-    uint64_t temp_level_sample_count = 0; // reset the level meter after 2000 samples == 22fps
+    int16_t m_tempLevelL = 0;
+    int16_t m_tempLevelR = 0;
+    uint64_t m_tempLevelSampleCount = 0; // reset the level meter after 2000 samples == 22fps
 
     // According to my calculations, we could record
     // about 13 billion years without hitting an overflow.
@@ -129,9 +128,9 @@ private:
     // forces us to switch the file after roughly 6.5h.
     // Most unix file systems are comparable to NTFS (ext3)
     // or even better (ext4, btrfs, ...)
-    std::atomic<uint64_t> recorded_sample_count { 0 };
-    uint64_t              written_sample_count = 0;
-    uint64_t              current_file_started_at = 0;
+    std::atomic<uint64_t> m_recordedSampleCount { 0 };
+    uint64_t              m_writtenSampleCount = 0;
+    uint64_t              m_currentFileStartedAt = 0;
 
     // This is a bit tricky and inherently dangerous:
     // We need to communicate with the recording thread in a non-blocking
@@ -154,14 +153,14 @@ private:
     // Lock-free programming is hard, so I might have overlooked some gotchas :/
     // Well, we kinda assume that a std::atomic is lock-free for enums, too.
     enum class RecordingState { START, STOP_REQUESTED, STOP_ACCEPTED};
-    std::atomic<RecordingState> recording_flag { RecordingState::STOP_ACCEPTED };
+    std::atomic<RecordingState> m_recordingFlag { RecordingState::STOP_ACCEPTED };
 
-    std::atomic<bool> monitor_enabled { false };
+    std::atomic<bool> m_monitorEnabled { false };
 
-    std::atomic<bool> dropping_samples { false };
+    std::atomic<bool> m_droppingSamples { false };
 
-    QTemporaryFile *currentFile          = nullptr;
-    QString         currentDataDirectory = QString();
+    QTemporaryFile *m_currentFile          = nullptr;
+    QString         m_currentDataDirectory = QString();
 
     bool m_canRecord = false;
     void setCanRecord(bool can)
@@ -179,9 +178,6 @@ private:
             emit canMonitorChanged(can);
         }
     }
-
-public:
-    ~SampleMover();
 };
 
 } // namespace Recording

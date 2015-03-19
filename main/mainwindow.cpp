@@ -218,7 +218,7 @@ MainWindow::timeUpdate(uint64_t samples)
 void MainWindow::availableSpaceUpdate(uint64_t space)
 {
     m_lastSpaceCheckSpace = space;
-    m_lastSpaceCheckTime  = m_mover->getRecordedSampleCount();
+    m_lastSpaceCheckTime  = m_mover->recordedSampleCount();
 
     ui->diskSpaceLbl->setText(Util::formatTime(space/4));
 }
@@ -231,7 +231,7 @@ void MainWindow::trackTimeUpdate(uint64_t samples)
 
 void MainWindow::trackBtnClicked()
 {
-    m_trackController->startNewTrack(m_mover->getRecordedSampleCount());
+    m_trackController->startNewTrack(m_mover->recordedSampleCount());
 }
 
 void MainWindow::quitDialogFinished(int result)
