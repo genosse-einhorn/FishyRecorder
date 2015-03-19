@@ -41,8 +41,7 @@ SOURCES += \
     export/coordinator.cpp \
     main/fancyprogressbar.cpp \
     util/boolsignalor.cpp \
-    util/portaudio.cpp \
-    presentation/powerpointpresenter.cpp
+    util/portaudio.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -69,8 +68,7 @@ HEADERS += \
     export/coordinator.h \
     main/fancyprogressbar.h \
     util/boolsignalor.h \
-    util/portaudio.h \
-    presentation/powerpointpresenter.h
+    util/portaudio.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -79,8 +77,7 @@ FORMS    += \
     recording/playbackcontrol.ui \
     main/configpane.ui \
     main/quitdialog.ui \
-    main/aboutpane.ui \
-    presentation/powerpointpresenter.ui
+    main/aboutpane.ui
 
 win32 {
     # presentation subsystem is windows only (unfortunately)
@@ -96,17 +93,20 @@ win32 {
         presentation/screenviewcontrol.cpp \
         external/qwinhost.cpp \
         presentation/welcomepane.cpp \
-        presentation/pdfpresenter.cpp
+        presentation/pdfpresenter.cpp \
+        presentation/powerpointpresenter.cpp
     HEADERS += \
         presentation/presentationtab.h \
         presentation/screenviewcontrol.h \
         external/qwinhost.h \
         presentation/welcomepane.h \
-        presentation/pdfpresenter.h
+        presentation/pdfpresenter.h \
+    presentation/powerpointpresenter.h
     FORMS += \
         presentation/presentationtab.ui \
         presentation/welcomepane.ui \
-        presentation/pdfpresenter.ui
+        presentation/pdfpresenter.ui \
+        presentation/powerpointpresenter.ui
 }
 
 CONFIG(debug, debug|release) {
