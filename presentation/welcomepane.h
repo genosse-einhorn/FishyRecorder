@@ -19,9 +19,7 @@ public:
 
 signals:
     void pdfRequested();
-
-private slots:
-    void pdfButtonClicked();
+    void pptRequested();
 
 private:
     Ui::WelcomePane *ui;

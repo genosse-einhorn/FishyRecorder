@@ -43,9 +43,8 @@ public slots:
 
 private slots:
     void openPdf();
-    void slotCanNextSlideChanged(bool can);
-    void slotCanPrevSlideChanged(bool can);
-    void slotNoSlides() { slotCanNextSlideChanged(false); slotCanPrevSlideChanged(false); }
+    void openPpt();
+    void slotNoSlides() { canNextSlideChanged(false); canPrevSlideChanged(false); }
 
 private:
     Ui::PresentationTab *ui;

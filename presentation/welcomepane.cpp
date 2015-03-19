@@ -9,17 +9,13 @@ WelcomePane::WelcomePane(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QObject::connect(ui->openPdfButton, &QAbstractButton::clicked, this, &WelcomePane::pdfButtonClicked);
+    QObject::connect(ui->openPdfButton, &QAbstractButton::clicked, this, &WelcomePane::pdfRequested);
+    QObject::connect(ui->openPptButton, &QAbstractButton::clicked, this, &WelcomePane::pptRequested);
 }
 
 WelcomePane::~WelcomePane()
 {
     delete ui;
-}
-
-void WelcomePane::pdfButtonClicked()
-{
-    emit pdfRequested();
 }
 
 } // namespace Presentation

@@ -3,6 +3,7 @@
 #include "presentation/screenviewcontrol.h"
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
+#include "presentation/powerpointpresenter.h"
 #include "util/misc.h"
 
 #include <QGridLayout>
@@ -30,6 +31,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
     ui->sidebar->insertWidget(0, m_welcome);
 
     QObject::connect(m_welcome, &WelcomePane::pdfRequested, this, &PresentationTab::openPdf);
+    QObject::connect(m_welcome, &WelcomePane::pptRequested, this, &PresentationTab::openPpt);
 
     m_overlayWindow->setWindowFlags(Qt::Window | Qt::Tool | Qt::FramelessWindowHint);
     m_overlayWindow->setAttribute(Qt::WA_ShowWithoutActivating);
@@ -137,6 +139,11 @@ void PresentationTab::openPdf()
         return;
     }
 
+    int index = ui->sidebar->insertWidget(-1, presenter);
+    ui->sidebar->setCurrentIndex(index);
+
+    presenter->setScreen(m_currentScreen);
+
     QObject::connect(presenter, &PdfPresenter::closeRequested, presenter, &QObject::deleteLater);
     QObject::connect(presenter, &PdfPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
 
@@ -144,23 +151,48 @@ void PresentationTab::openPdf()
     QObject::connect(this, &PresentationTab::sigPreviousSlide, presenter, &PdfPresenter::previousPage);
     QObject::connect(this, &PresentationTab::sigScreenChange, presenter, &PdfPresenter::setScreen);
 
-    QObject::connect(presenter, &PdfPresenter::canNextPageChanged, this, &PresentationTab::slotCanNextSlideChanged);
-    QObject::connect(presenter, &PdfPresenter::canPrevPageChanged, this, &PresentationTab::slotCanPrevSlideChanged);
+    QObject::connect(presenter, &PdfPresenter::canNextPageChanged, this, &PresentationTab::canNextSlideChanged);
+    QObject::connect(presenter, &PdfPresenter::canPrevPageChanged, this, &PresentationTab::canPrevSlideChanged);
+}
 
-    presenter->setScreen(m_currentScreen);
+void PresentationTab::openPpt()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open PPT"),
+                                                    QString(),
+                                                    tr("PowerPoint Presentations (*.ppt *.pptx)"));
+
+    if (!filename.size())
+        return;
+
+    if (m_currentScreen.width() < 1) {
+        QMessageBox::critical(this, tr("No presentation screen"), tr("Select a screen to present on, first"));
+
+        return;
+    }
+
+    PowerpointPresenter *presenter = PowerpointPresenter::loadPowerpointFile(filename);
+
+
+    if (!presenter) {
+        QMessageBox::critical(this, tr("Could not open PPT"), tr("Unknown error occured"));
+
+        return;
+    }
 
     int index = ui->sidebar->insertWidget(-1, presenter);
     ui->sidebar->setCurrentIndex(index);
-}
 
-void PresentationTab::slotCanNextSlideChanged(bool can)
-{
-    emit canNextSlideChanged(can);
-}
+    QObject::connect(presenter, &PowerpointPresenter::closeRequested, presenter, &QObject::deleteLater);
+    QObject::connect(presenter, &PowerpointPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
 
-void PresentationTab::slotCanPrevSlideChanged(bool can)
-{
-    emit canPrevSlideChanged(can);
+    QObject::connect(this, &PresentationTab::sigNextSlide, presenter, &PowerpointPresenter::nextPage);
+    QObject::connect(this, &PresentationTab::sigPreviousSlide, presenter, &PowerpointPresenter::previousPage);
+    QObject::connect(this, &PresentationTab::sigScreenChange, presenter, &PowerpointPresenter::setScreen);
+
+    emit this->canNextSlideChanged(true);
+    emit this->canPrevSlideChanged(true);
+
+    presenter->setScreen(m_currentScreen);
 }
 
 } // namespace Presentation

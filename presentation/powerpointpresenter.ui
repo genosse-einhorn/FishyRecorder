@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Presentation::PdfPresenter</class>
- <widget class="QWidget" name="Presentation::PdfPresenter">
+ <class>Presentation::PowerpointPresenter</class>
+ <widget class="QWidget" name="Presentation::PowerpointPresenter">
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>274</width>
-    <height>247</height>
+    <width>400</width>
+    <height>300</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -16,29 +16,17 @@
     <verstretch>0</verstretch>
    </sizepolicy>
   </property>
-  <property name="minimumSize">
-   <size>
-    <width>5</width>
-    <height>0</height>
-   </size>
-  </property>
   <property name="windowTitle">
    <string>Form</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="0" column="0" colspan="2">
-    <widget class="QListWidget" name="slideList">
+   <item row="0" column="0">
+    <widget class="QListWidget" name="thumbnailList">
      <property name="sizePolicy">
       <sizepolicy hsizetype="Minimum" vsizetype="Expanding">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>5</width>
-       <height>0</height>
-      </size>
      </property>
      <property name="showDropIndicator" stdset="0">
       <bool>false</bool>
@@ -57,22 +45,10 @@
      </property>
     </widget>
    </item>
-   <item row="1" column="0" colspan="2">
-    <widget class="QPushButton" name="deleteBtn">
-     <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-       <horstretch>0</horstretch>
-       <verstretch>0</verstretch>
-      </sizepolicy>
-     </property>
-     <property name="minimumSize">
-      <size>
-       <width>5</width>
-       <height>0</height>
-      </size>
-     </property>
+   <item row="1" column="0">
+    <widget class="QPushButton" name="endBtn">
      <property name="text">
-      <string>End presentation</string>
+      <string>End Presentation</string>
      </property>
     </widget>
    </item>

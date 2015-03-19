@@ -21,25 +21,54 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QLabel" name="label">
+    <widget class="QToolButton" name="openPdfButton">
      <property name="sizePolicy">
-      <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
        <horstretch>0</horstretch>
        <verstretch>0</verstretch>
       </sizepolicy>
      </property>
      <property name="text">
-      <string>Present what?</string>
+      <string>PDF</string>
      </property>
-     <property name="wordWrap">
-      <bool>true</bool>
+     <property name="icon">
+      <iconset resource="../res/stuff.qrc">
+       <normaloff>:/images/pdf.png</normaloff>:/images/pdf.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>32</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextUnderIcon</enum>
      </property>
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="openPdfButton">
+    <widget class="QToolButton" name="openPptButton">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
-      <string>Present PDF</string>
+      <string>PowerPoint</string>
+     </property>
+     <property name="icon">
+      <iconset resource="../res/stuff.qrc">
+       <normaloff>:/images/ppt.png</normaloff>:/images/ppt.png</iconset>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>32</width>
+       <height>32</height>
+      </size>
+     </property>
+     <property name="toolButtonStyle">
+      <enum>Qt::ToolButtonTextUnderIcon</enum>
      </property>
     </widget>
    </item>
@@ -58,6 +87,8 @@
    </item>
   </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="../res/stuff.qrc"/>
+ </resources>
  <connections/>
 </ui>

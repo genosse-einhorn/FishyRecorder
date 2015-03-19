@@ -7,6 +7,7 @@
 QT       += core widgets concurrent
 
 CONFIG   += link_pkgconfig c++11
+CONFIG   -= exceptions rtti
 
 PKGCONFIG += portaudio-2.0 sqlite3
 
@@ -40,7 +41,8 @@ SOURCES += \
     export/coordinator.cpp \
     main/fancyprogressbar.cpp \
     util/boolsignalor.cpp \
-    util/portaudio.cpp
+    util/portaudio.cpp \
+    presentation/powerpointpresenter.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -67,7 +69,8 @@ HEADERS += \
     export/coordinator.h \
     main/fancyprogressbar.h \
     util/boolsignalor.h \
-    util/portaudio.h
+    util/portaudio.h \
+    presentation/powerpointpresenter.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -76,7 +79,8 @@ FORMS    += \
     recording/playbackcontrol.ui \
     main/configpane.ui \
     main/quitdialog.ui \
-    main/aboutpane.ui
+    main/aboutpane.ui \
+    presentation/powerpointpresenter.ui
 
 win32 {
     # presentation subsystem is windows only (unfortunately)
@@ -85,7 +89,7 @@ win32 {
     PKGCONFIG += poppler-qt5 lcms2
     QT += xml
 
-    QT += winextras
+    QT += winextras axcontainer
 
     SOURCES +=  \
         presentation/presentationtab.cpp \
