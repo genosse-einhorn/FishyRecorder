@@ -316,6 +316,7 @@ void
 Recording::SampleMover::setInputDevice(PaDeviceIndex device)
 {
     m_inputDevice = device;
+    m_configuredLatency = std::numeric_limits<double>::max();
 
     reopenStream();
 }
@@ -324,6 +325,7 @@ void
 Recording::SampleMover::setMonitorDevice(PaDeviceIndex device)
 {
     m_monitorDevice = device;
+    m_configuredLatency = std::numeric_limits<double>::max();
 
     reopenStream();
 }
