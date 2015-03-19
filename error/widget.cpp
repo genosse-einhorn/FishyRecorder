@@ -29,13 +29,9 @@ Error::Widget::Widget(QWidget *parent) :
 
     max_height_anim->setEasingCurve(QEasingCurve::InOutExpo);
 
-    // WHY? If any widget with size 0 exists, and we take the winId() of any (other) widget in the window
-    // and the user moves the window to another screen, the app will crash with a failed QT_ASSERT.
-    // QTBUG-43489
-    this->setMaximumHeight(1);
+    this->setMaximumHeight(0);
 
     QObject::connect(temporary_error_timer, &QTimer::timeout, this, &Error::Widget::clearError);
-    QObject::connect(max_height_anim, &QAbstractAnimation::finished, this, &Error::Widget::animationFinished);
 }
 
 void
@@ -79,17 +75,9 @@ Error::Widget::clearError()
     temporary_error_timer->stop();
     max_height_anim->stop();
     max_height_anim->setStartValue(this->height());
-    max_height_anim->setEndValue(1);
+    max_height_anim->setEndValue(0);
     max_height_anim->setDuration(500);
     max_height_anim->start();
-
-}
-
-void Error::Widget::animationFinished()
-{
-    if (max_height_anim->endValue() == 1) {
-        this->setStyleSheet("background-color: transparent; color: transparent;");
-    }
 }
 
 void Error::Widget::paintEvent(QPaintEvent *event)
