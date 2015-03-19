@@ -109,23 +109,15 @@ Recording::SampleMover::SampleMover(uint64_t samplesAlreadyRecorded, QObject *pa
     deviceErrorProvider    = new Error::Provider(this);
     recordingErrorProvider = new Error::Provider(this);
 
+    QObject::connect(deviceErrorProvider, &Error::Provider::error, this, &SampleMover::deviceError);
+    QObject::connect(recordingErrorProvider, &Error::Provider::error, this, &SampleMover::recordingError);
+
     setInputDevice();
 
     QTimer *t = new QTimer(this);
     t->setInterval(40);
     QObject::connect(t, &QTimer::timeout, this, &Recording::SampleMover::reportState);
     t->start();
-}
-
-Error::Provider *
-Recording::SampleMover::getDeviceErrorProvider()
-{
-    return deviceErrorProvider;
-}
-
-Error::Provider *Recording::SampleMover::getRecordingErrorProvider()
-{
-    return recordingErrorProvider;
 }
 
 void

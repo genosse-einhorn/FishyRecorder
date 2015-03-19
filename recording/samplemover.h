@@ -8,8 +8,8 @@
 #include <atomic>
 
 #include "external/pa_ringbuffer.h"
+#include "error/provider.h"
 
-namespace Error { class Provider; }
 class QTemporaryFile;
 
 
@@ -19,43 +19,34 @@ class SampleMover : public QObject
 {
     Q_OBJECT
 public:
+    using ErrorType = Error::Provider::ErrorType;
+
     explicit SampleMover(uint64_t samplesAlreadyRecorded, QObject *parent = 0);
 
     //! this function is explicitly thread-safe
     uint64_t getRecordedSampleCount();
 
+
+
+signals:
     /*!
      * \brief  Errors related to the choice of audio device(s).
-     * \return Provider to notify the UI about these kinds of errors
      *
      * Possible device errors should be displayed next to the device selection box
      * and are assumed to be resolvable by selecting another audio device.
      */
-    Error::Provider *getDeviceErrorProvider();
+    void deviceError(ErrorType severity, const QString& message1, const QString& message2);
 
     /*!
      * \brief  Errors related to the overall recording process
-     * \return Provider object to notify the UI
      *
      * Errors related to the overall recording process can range from a warning about
      * dropped samples to a message about an emergency shutdown of the recording process.
      *
      * These errors are supposed to be displayed right next to other recording indicators.
      */
-    Error::Provider *getRecordingErrorProvider();
+    void recordingError(ErrorType severity, const QString& message1, const QString& message2);
 
-    bool recordingState() {
-        return recording_flag != RecordingState::STOP_ACCEPTED;
-    }
-
-    bool canRecord() {
-        return m_canRecord;
-    }
-    bool canMonitor() {
-        return m_canMonitor;
-    }
-
-signals:
     void levelMeterUpdate(int16_t left, int16_t right);
     void timeUpdate(uint64_t recorded_samples);
     void recordingStateChanged(bool recording, uint64_t total_recorded_sample_count);
@@ -84,6 +75,10 @@ private:
                                const PaStreamCallbackTimeInfo *timeInfo,
                                PaStreamCallbackFlags statusFlags,
                                void *userData);
+
+    bool recordingState() {
+        return recording_flag != RecordingState::STOP_ACCEPTED;
+    }
 
     //! (Re)open the recording stream after a device has been changed
     void reopenStream();

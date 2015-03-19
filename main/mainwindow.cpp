@@ -64,8 +64,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, ui->recordBtn, &QAbstractButton::setChecked);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, ui->trackBtn, &QAbstractButton::setEnabled);
     QObject::connect(m_mover, &Recording::SampleMover::canMonitorChanged, ui->monitorBtn, &QAbstractButton::setEnabled);
-    QObject::connect(m_mover->getDeviceErrorProvider(), &Error::Provider::error, m_configPane, &ConfigPane::displayDeviceError);
-    QObject::connect(m_mover->getRecordingErrorProvider(), &Error::Provider::error, ui->recordingErrorDisplay, &Error::Widget::displayError);
+    QObject::connect(m_mover, &Recording::SampleMover::deviceError, m_configPane, &ConfigPane::displayDeviceError);
+    QObject::connect(m_mover, &Recording::SampleMover::recordingError, ui->recordingErrorDisplay, &Error::Widget::displayError);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, m_configPane, &ConfigPane::recordingStateChanged);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, m_trackController, &Recording::TrackController::onRecordingStateChanged);
     QObject::connect(m_mover, &Recording::SampleMover::newRecordingFile, m_trackController, &Recording::TrackController::onRecordingFileChanged);
