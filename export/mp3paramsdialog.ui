@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>Export::Mp3ParamsDiaog</class>
- <widget class="QDialog" name="Export::Mp3ParamsDiaog">
+ <class>Export::Mp3ParamsDialog</class>
+ <widget class="QDialog" name="Export::Mp3ParamsDialog">
   <property name="geometry">
    <rect>
     <x>0</x>

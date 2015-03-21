@@ -6,7 +6,7 @@
 namespace Export {
 
 namespace Ui {
-class Mp3ParamsDiaog;
+class Mp3ParamsDialog;
 }
 
 class Mp3ParamsDialog : public QDialog
@@ -22,7 +22,7 @@ public:
     int     brate() const;
 
 private:
-    Ui::Mp3ParamsDiaog *ui;
+    Ui::Mp3ParamsDialog *ui;
 };
 
 

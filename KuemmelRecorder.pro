@@ -82,7 +82,7 @@ FORMS    += \
     main/configpane.ui \
     main/quitdialog.ui \
     main/aboutpane.ui \
-    export/mp3paramsdiaog.ui
+    export/mp3paramsdialog.ui
 
 win32 {
     # presentation subsystem is windows only (unfortunately)

@@ -1,11 +1,11 @@
 #include "mp3paramsdialog.h"
-#include "ui_mp3paramsdiaog.h"
+#include "ui_mp3paramsdialog.h"
 
 namespace Export {
 
 Mp3ParamsDialog::Mp3ParamsDialog(const QString &defaultAlbum, const QString &defaultArtist, QWidget *parent) :
     QDialog(parent),
-    ui(new Ui::Mp3ParamsDiaog)
+    ui(new Ui::Mp3ParamsDialog)
 {
     ui->setupUi(this);
 
