@@ -15,8 +15,8 @@ TrackDataAccessor::TrackDataAccessor(const std::map<uint64_t, QString> &dataFile
     m_startSample(startSample),
     m_length(length),
     m_name(name),
-    m_timestamp(timestamp),
-    m_trackIndex(trackIndex)
+    m_trackIndex(trackIndex),
+    m_timestamp(timestamp)
 {
     for (auto const& i : dataFiles) {
         // Stuffing a QFile into a STL container is hard. C++11 template hackery saves the day.
