@@ -76,7 +76,7 @@ QVariant Recording::TrackListModel::data(const QModelIndex &index, int role) con
     if (index.row() < 0 || index.row() >= m_controller->trackCount())
         return QVariant();
 
-    if (role == Qt::DisplayRole) {
+    if (role == Qt::DisplayRole || role == Qt::EditRole) {
         if (index.column() == COL_TRACKNO)
             return index.row();
         else if (index.column() == COL_NAME)
@@ -86,7 +86,7 @@ QVariant Recording::TrackListModel::data(const QModelIndex &index, int role) con
         else if (index.column() == COL_LENGTH)
             return samples_to_time(m_controller->trackLength(index.row()));
         else if (index.column() == COL_TIMESTAMP)
-            return m_controller->trackTimestamp(index.row()).toLocalTime().toString();
+            return m_controller->trackTimestamp(index.row()).toLocalTime().toString(Qt::SystemLocaleShortDate);
     }
 
     return QVariant();
