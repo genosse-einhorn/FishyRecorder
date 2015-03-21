@@ -142,8 +142,6 @@ void PresentationTab::openPdf()
     int index = ui->sidebar->insertWidget(-1, presenter);
     ui->sidebar->setCurrentIndex(index);
 
-    presenter->setScreen(m_currentScreen);
-
     QObject::connect(presenter, &PdfPresenter::closeRequested, presenter, &QObject::deleteLater);
     QObject::connect(presenter, &PdfPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
 
@@ -153,6 +151,12 @@ void PresentationTab::openPdf()
 
     QObject::connect(presenter, &PdfPresenter::canNextPageChanged, this, &PresentationTab::canNextSlideChanged);
     QObject::connect(presenter, &PdfPresenter::canPrevPageChanged, this, &PresentationTab::canPrevSlideChanged);
+
+    presenter->setScreen(m_currentScreen);
+
+    // initially sync nex/prev button activations
+    emit canNextSlideChanged(presenter->canNextPage());
+    emit canPrevSlideChanged(presenter->canPrevPage());
 }
 
 void PresentationTab::openPpt()
