@@ -56,7 +56,7 @@ void PlaybackControl::trackSelected(int trackNo)
 
     auto accessor = m_controller->accessTrackData(trackNo);
 
-    m_trackLength = accessor->getLength();
+    m_trackLength = accessor->length();
 
     accessor->setParent(nullptr);
     accessor->moveToThread(m_playbackThread);

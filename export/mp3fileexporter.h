@@ -12,16 +12,15 @@ class Mp3FileExporter : public Export::EncodedFileExporter
 {
     Q_OBJECT
 public:
-    Mp3FileExporter(QObject *parent = 0);
-
-    static EncodedFileExporter* create() { return new Mp3FileExporter(); }
+    Mp3FileExporter(const QString& artist, const QString& album, int brate, QObject *parent = 0);
+    ~Mp3FileExporter();
 
     // EncodedFileExporter interface
 protected:
-    virtual QString fileExtension();
-    virtual bool beginTrack(QIODevice *output, uint64_t trackLength);
-    virtual bool encodeData(const char *buffer, uint64_t numSamples);
-    virtual bool finishTrack();
+    virtual QString fileExtension() const override;
+    virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString& trackName, int trackIndex) override;
+    virtual bool encodeData(const char *buffer, uint64_t numSamples) override;
+    virtual bool finishTrack() override;
 
 private:
     lame_global_flags *m_lame_gbf;

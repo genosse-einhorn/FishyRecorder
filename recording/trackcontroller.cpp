@@ -126,7 +126,14 @@ Recording::TrackDataAccessor *Recording::TrackController::accessTrackData(int tr
     if (!trackIndexValid(trackId))
         return nullptr;
 
-    return new Recording::TrackDataAccessor(m_rawDataFiles, m_tracks[trackId].start, m_tracks[trackId].length);
+    const Track &track = m_tracks[trackId];
+
+    return new Recording::TrackDataAccessor(m_rawDataFiles,
+                                            track.start,
+                                            track.length,
+                                            track.name,
+                                            track.timestamp,
+                                            trackId);
 }
 
 void Recording::TrackController::onRecordingStateChanged(bool recording, uint64_t n_samples)

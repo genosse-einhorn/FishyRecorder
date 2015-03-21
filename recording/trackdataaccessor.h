@@ -4,6 +4,7 @@
 #include <QObject>
 #include <QString>
 #include <QFile>
+#include <QDateTime>
 #include <map>
 
 #include "error/provider.h"
@@ -26,18 +27,36 @@ class TrackDataAccessor : public QObject
 {
     Q_OBJECT
 public:
-    explicit TrackDataAccessor(const std::map<uint64_t, QString> &dataFiles, uint64_t startSample, uint64_t length, QObject *parent = 0);
+    explicit TrackDataAccessor(const std::map<uint64_t, QString> &dataFiles,
+                               uint64_t startSample,
+                               uint64_t length,
+                               const QString &name,
+                               const QDateTime &timestamp,
+                               int trackIndex,
+                               QObject *parent = 0);
 
     const Error::Provider *errorProvider() const {
         return &m_errorProvider;
     }
 
-    uint64_t getPos() const {
+    uint64_t pos() const {
         return m_currentPos;
     }
 
-    uint64_t getLength() const {
+    uint64_t length() const {
         return m_length;
+    }
+
+    QString name() const {
+        return m_name;
+    }
+
+    int index() const {
+        return m_trackIndex;
+    }
+
+    QDateTime timestamp() const {
+        return m_timestamp;
     }
 
     void seek(uint64_t samples_since_track_begin) {
@@ -86,6 +105,9 @@ private:
     uint64_t                  m_currentPos   = 0;
     uint64_t                  m_startSample  = 0;
     uint64_t                  m_length       = 0;
+    QString                   m_name;
+    int                       m_trackIndex   = 0;
+    QDateTime                 m_timestamp;
 
     /*!
      * \brief Finds the first file belonging to the track at the given position

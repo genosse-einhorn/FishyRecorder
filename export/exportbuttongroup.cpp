@@ -6,6 +6,8 @@
 #include "export/mp3fileexporter.h"
 #include "export/progressdialog.h"
 #include "export/coordinator.h"
+#include "export/mp3paramsdialog.h"
+#include "config/database.h"
 
 #include <QFileDialog>
 #include <QThread>
@@ -31,10 +33,11 @@ namespace {
 
 namespace Export {
 
-ExportButtonGroup::ExportButtonGroup(const Recording::TrackController *controller, QWidget *parent) :
+ExportButtonGroup::ExportButtonGroup(const Recording::TrackController *controller, Config::Database *db, QWidget *parent) :
     QGroupBox(parent),
     ui(new Ui::ExportButtonGroup),
-    m_controller(controller)
+    m_controller(controller),
+    m_database(db)
 {
     ui->setupUi(this);
 
@@ -73,10 +76,26 @@ void ExportButtonGroup::mp3BtnClicked()
     if (!dir.size())
         return;
 
+    // find last artist name
+    QString artist = m_database->readConfigString("mp3_export_artist");
+
+    // improvise album name
+    QString album  = tr("Recording from %1").arg(m_controller->trackTimestamp(0).toString(Qt::SystemLocaleShortDate));
+
+    Mp3ParamsDialog paramsDlg(album, artist, this);
+    if (paramsDlg.exec() != QDialog::Accepted)
+        return;
+
+    artist    = paramsDlg.artist();
+    album     = paramsDlg.album();
+    int brate = paramsDlg.brate();
+
+    m_database->writeConfigString("mp3_export_artist", artist);
+
     auto dialog = new ProgressDialog(this);
     dialog->setWindowTitle(tr("Exporting MP3 files"));
 
-    kickoffExport(new Coordinator(m_controller, dir, &Mp3FileExporter::create, this), dialog);
+    kickoffExport(new Coordinator(m_controller, dir, [=](){ return new Mp3FileExporter(artist, album, brate); }, this), dialog);
 }
 
 } // namespace Export

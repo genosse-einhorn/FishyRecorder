@@ -30,7 +30,7 @@ MainWindow::MainWindow(QWidget *parent) :
     m_config(new Config::Database(this)),
     m_mover(new Recording::SampleMover(m_config->readTotalSamplesRecorded())),
     m_trackController(new Recording::TrackController(m_config, this)),
-    m_trackPane(new Recording::TrackViewPane(m_trackController, this)),
+    m_trackPane(new Recording::TrackViewPane(m_trackController, m_config, this)),
     m_configPane(new ConfigPane(m_config, this)),
     m_quitDialog(new QuitDialog(this)),
     m_moverThread(new QThread())

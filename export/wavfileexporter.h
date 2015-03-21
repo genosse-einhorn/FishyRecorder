@@ -29,9 +29,9 @@ private:
 
     // EncodedFileExporter interface
 protected:
-    virtual QString fileExtension();
-    virtual bool beginTrack(QIODevice *output, uint64_t trackLength);
-    virtual bool encodeData(const char *buffer, uint64_t numSamples);
+    virtual QString fileExtension() const override;
+    virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString &name, int trackIndex) override;
+    virtual bool encodeData(const char *buffer, uint64_t numSamples) override;
     virtual bool finishTrack();
 };
 

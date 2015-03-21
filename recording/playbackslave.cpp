@@ -64,7 +64,7 @@ void PlaybackSlave::insertNewSampleSource(TrackDataAccessor *accessor, uint64_t 
 
     QObject::connect(m_accessor->errorProvider(), &Error::Provider::error, m_errorProvider, &Error::Provider::setError);
 
-    m_trackLength = accessor->getLength();
+    m_trackLength = accessor->length();
     seek(startPosition);
 }
 

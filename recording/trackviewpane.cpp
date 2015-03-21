@@ -14,7 +14,7 @@
 
 namespace Recording {
 
-TrackViewPane::TrackViewPane(TrackController *controller, QWidget *parent) :
+TrackViewPane::TrackViewPane(TrackController *controller, Config::Database *config, QWidget *parent) :
     QWidget(parent),
     m_controller(controller)
 {
@@ -34,7 +34,7 @@ TrackViewPane::TrackViewPane(TrackController *controller, QWidget *parent) :
     QWidget *rightPane = new QWidget(this);
     QGridLayout *paneLayout = new QGridLayout(this);
 
-    auto exportPane = new Export::ExportButtonGroup(controller, this);
+    auto exportPane = new Export::ExportButtonGroup(controller, config, this);
     exportPane->setSizePolicy(QSizePolicy::Minimum, QSizePolicy::Minimum);
 
     m_playback = new PlaybackControl(controller, this);

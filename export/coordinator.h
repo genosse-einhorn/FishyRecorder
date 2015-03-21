@@ -48,15 +48,15 @@ private slots:
     void mapAborted();
 
 private:
-    void encodeTrack(std::pair<const unsigned, Recording::TrackDataAccessor *> &accessor);
+    void encodeTrack(std::pair<const int, Recording::TrackDataAccessor *> &accessor);
 
     const Recording::TrackController *m_trackController;
     QString                           m_outputDir;
     int                               m_trackNoChars;
 
-    std::function<EncodedFileExporter*()>             m_encoderFactory;
-    QFutureWatcher<void>                             *m_doneWatcher = nullptr;
-    std::map<unsigned, Recording::TrackDataAccessor*> m_accessors;
+    std::function<EncodedFileExporter*()>        m_encoderFactory;
+    QFutureWatcher<void>                        *m_doneWatcher = nullptr;
+    std::map<int, Recording::TrackDataAccessor*> m_accessors;
 
     bool m_errorSeen = false; // set to true whenever we deliver an error
     std::atomic<bool> m_aborted { false }; // might be accessed by workers

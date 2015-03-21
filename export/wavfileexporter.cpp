@@ -40,13 +40,16 @@ WavFileExporter::WavFileExporter(QObject *parent) :
 {
 }
 
-QString WavFileExporter::fileExtension()
+QString WavFileExporter::fileExtension() const
 {
     return "wav";
 }
 
-bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength)
+bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const QString &name, int trackIndex)
 {
+    Q_UNUSED(name);
+    Q_UNUSED(trackIndex);
+
     if (trackLength >= std::numeric_limits<uint32_t>::max()/4) {
         m_errorProvider->setError(Error::Provider::ErrorType::Error,
                                   tr("WAV Error"),

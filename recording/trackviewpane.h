@@ -7,6 +7,10 @@
 
 class QTableView;
 
+namespace Config {
+    class Database;
+}
+
 namespace Recording {
 
 class TrackController;
@@ -16,7 +20,7 @@ class TrackViewPane : public QWidget
 {
     Q_OBJECT
 public:
-    explicit TrackViewPane(TrackController *controller, QWidget *parent = 0);
+    explicit TrackViewPane(TrackController *controller, Config::Database *config, QWidget *parent = 0);
 
 signals:
 

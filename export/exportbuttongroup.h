@@ -7,6 +7,10 @@ namespace Recording {
     class TrackController;
 }
 
+namespace Config {
+    class Database;
+}
+
 namespace Export {
 
 namespace Ui {
@@ -18,7 +22,7 @@ class ExportButtonGroup : public QGroupBox
     Q_OBJECT
 
 public:
-    explicit ExportButtonGroup(const Recording::TrackController *controller, QWidget *parent = 0);
+    explicit ExportButtonGroup(const Recording::TrackController *controller, Config::Database *db, QWidget *parent = 0);
     ~ExportButtonGroup();
 
 private slots:
@@ -28,6 +32,7 @@ private slots:
 private:
     Ui::ExportButtonGroup *ui;
     const Recording::TrackController *m_controller;
+    Config::Database                 *m_database;
 };
 
 

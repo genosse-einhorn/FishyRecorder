@@ -7,8 +7,16 @@ namespace Recording {
 TrackDataAccessor::TrackDataAccessor(const std::map<uint64_t, QString> &dataFiles,
                                      uint64_t startSample,
                                      uint64_t length,
+                                     const QString &name,
+                                     const QDateTime &timestamp,
+                                     int trackIndex,
                                      QObject *parent) :
-    QObject(parent), m_startSample(startSample), m_length(length)
+    QObject(parent),
+    m_startSample(startSample),
+    m_length(length),
+    m_name(name),
+    m_timestamp(timestamp),
+    m_trackIndex(trackIndex)
 {
     for (auto const& i : dataFiles) {
         // Stuffing a QFile into a STL container is hard. C++11 template hackery saves the day.

@@ -89,7 +89,7 @@ void Coordinator::mapAborted()
     m_aborted = true;
 }
 
-void Coordinator::encodeTrack(std::pair<const unsigned, Recording::TrackDataAccessor*> &accessor)
+void Coordinator::encodeTrack(std::pair<const int, Recording::TrackDataAccessor*> &accessor)
 {
     if (m_aborted)
         return;

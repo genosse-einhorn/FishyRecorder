@@ -25,20 +25,15 @@ class EncodedFileExporter : public QObject
     Q_OBJECT
 public:
     explicit EncodedFileExporter(QObject *parent = 0);
+    virtual ~EncodedFileExporter();
 
     const Error::Provider *errorProvider() const {
         return m_errorProvider;
     }
 
-    QString trackName() { return m_trackName; }
-    QString albumName() { return m_albumName; }
-
-    void setTrackName(const QString& trackName) { m_trackName = trackName; }
-    void setAlbumName(const QString& albumName) { m_albumName = albumName; }
-
     void run(Recording::TrackDataAccessor *accessor, QIODevice *outputFile);
 
-    virtual QString fileExtension() = 0;
+    virtual QString fileExtension() const = 0;
 
 public slots:
     void abort();
@@ -47,8 +42,6 @@ signals:
     void samplesProcessed(uint64_t numSamples);
 
 private:
-    QString m_trackName;
-    QString m_albumName;
     bool    m_aborted = false;
 
 protected:
@@ -59,13 +52,14 @@ protected:
      * \param output        An already opened device where subsequent encoded data should be written to
      * \param trackLength   Length of the track in samples
      * \param name          User-Defined track name (for metadata, may be ignored)
+     * \param index         Track number, beginning with 0 for the first track (for metadata, may be ignored)
      * \return              Whether the start of the encoding process succeeded. False if errors occured.
      *
      * Errors should be described using the error provider member. If this method fails, neither encodeData
      * nor finishTrack will be called, and the callee is responsible for cleaning up its internal data structures.
      * The given device will be closed by the caller.
      */
-    virtual bool beginTrack(QIODevice *output, uint64_t trackLength) = 0;
+    virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString& name, int trackIndex) = 0;
 
     /*!
      * \brief encodeData    Supplies pcm samples to encode.

@@ -16,6 +16,11 @@ EncodedFileExporter::EncodedFileExporter(QObject *parent) :
 {
 }
 
+EncodedFileExporter::~EncodedFileExporter()
+{
+
+}
+
 static const unsigned int BUFFER_SIZE = 10240;
 
 void EncodedFileExporter::run(Recording::TrackDataAccessor *accessor, QIODevice *outputFile)
@@ -25,10 +30,10 @@ void EncodedFileExporter::run(Recording::TrackDataAccessor *accessor, QIODevice 
     uint64_t samples_processed = 0;
 
     // tell the slave to begin working
-    if (!beginTrack(outputFile, accessor->getLength()))
+    if (!beginTrack(outputFile, accessor->length(), accessor->name(), accessor->index()))
         return;
 
-    while (samples_processed < accessor->getLength()) {
+    while (samples_processed < accessor->length()) {
         if (Error::Simulation::SIMULATE("slowdownExport"))
             QThread::msleep(100);
 

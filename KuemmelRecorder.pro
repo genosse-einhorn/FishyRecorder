@@ -42,7 +42,8 @@ SOURCES += \
     main/fancyprogressbar.cpp \
     util/boolsignalor.cpp \
     util/portaudio.cpp \
-    recording/tracklistmodel.cpp
+    recording/tracklistmodel.cpp \
+    export/mp3paramsdialog.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -70,7 +71,8 @@ HEADERS += \
     main/fancyprogressbar.h \
     util/boolsignalor.h \
     util/portaudio.h \
-    recording/tracklistmodel.h
+    recording/tracklistmodel.h \
+    export/mp3paramsdialog.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -79,7 +81,8 @@ FORMS    += \
     recording/playbackcontrol.ui \
     main/configpane.ui \
     main/quitdialog.ui \
-    main/aboutpane.ui
+    main/aboutpane.ui \
+    export/mp3paramsdiaog.ui
 
 win32 {
     # presentation subsystem is windows only (unfortunately)
