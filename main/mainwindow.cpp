@@ -258,7 +258,7 @@ void MainWindow::closeEvent(QCloseEvent *ev)
 {
     ev->ignore();
 
-    if (m_trackController->getTrackCount())
+    if (m_trackController->trackCount())
         m_quitDialog->show();
     else
         quitDialogFinished(QuitDialog::DISCARD_DATA);

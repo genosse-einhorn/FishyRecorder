@@ -17,13 +17,13 @@ Coordinator::Coordinator(const Recording::TrackController *controller,
     m_outputDir(outputDir),
     m_encoderFactory(encoderFactory)
 {
-    for (unsigned i = 0; i < m_trackController->getTrackCount(); ++i) {
+    for (int i = 0; i < m_trackController->trackCount(); ++i) {
         m_accessors[i] = m_trackController->accessTrackData(i);
         m_accessors[i]->setParent(this); // Cleanup in case it isn't processed
-        m_totalSamples += m_trackController->getTrackLength(i);
+        m_totalSamples += m_trackController->trackLength(i);
     }
 
-    m_trackNoChars = QString("%1").arg(m_trackController->getTrackCount()-1).size();
+    m_trackNoChars = QString("%1").arg(m_trackController->trackCount()-1).size();
 }
 
 Coordinator::~Coordinator()

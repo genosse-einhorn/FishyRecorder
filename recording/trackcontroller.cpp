@@ -4,16 +4,8 @@
 
 #include <QDebug>
 
-static QString samples_to_time(uint64_t n_samples)
-{
-    uint64_t minutes = n_samples/44100/60;
-    uint64_t seconds = n_samples/44100 % 60;
-
-    return QString("%1:%2").arg(minutes).arg(seconds, 2, 10, QChar('0'));
-}
-
 Recording::TrackController::TrackController(Config::Database *db, QObject *parent) :
-    QAbstractTableModel(parent), m_database(db)
+    QObject(parent), m_database(db)
 {
     // initialize tracks and files based on the database
     for (const auto& track : m_database->readAllTracks()) {
@@ -25,30 +17,51 @@ Recording::TrackController::TrackController(Config::Database *db, QObject *paren
     }
 }
 
-unsigned Recording::TrackController::getTrackCount() const
+int Recording::TrackController::trackCount() const
 {
-    return (unsigned)m_tracks.size();
+    return (int)m_tracks.size();
 }
 
-QString Recording::TrackController::getTrackName(unsigned trackIndex) const
+QString Recording::TrackController::trackName(int trackIndex) const
 {
-    if (trackIndex >= m_tracks.size())
+    if (!trackIndexValid(trackIndex))
         return QString();
 
     return m_tracks[trackIndex].name;
 }
 
-uint64_t Recording::TrackController::getTrackLength(unsigned trackIndex) const
+uint64_t Recording::TrackController::trackStart(int trackIndex) const
 {
-    if (trackIndex >= m_tracks.size())
+    if (!trackIndexValid(trackIndex))
+        return 0;
+
+    return m_tracks[trackIndex].start;
+}
+
+uint64_t Recording::TrackController::trackLength(int trackIndex) const
+{
+    if (!trackIndexValid(trackIndex))
         return 0;
 
     return m_tracks[trackIndex].length;
 }
 
-void Recording::TrackController::splitTrack(unsigned trackIndex, uint64_t after_n_samples)
+QDateTime Recording::TrackController::trackTimestamp(int trackIndex) const
 {
-    if (trackIndex >= m_tracks.size())
+    if (!trackIndexValid(trackIndex))
+        return QDateTime();
+
+    return m_tracks[trackIndex].timestamp;
+}
+
+bool Recording::TrackController::trackBeingRecorded(int trackIndex) const
+{
+    return (trackIndex == ((int)m_tracks.size()-1)) && m_currentlyRecording;
+}
+
+void Recording::TrackController::splitTrack(int trackIndex, uint64_t after_n_samples)
+{
+    if (!trackIndexValid(trackIndex))
        return;
 
     Track originalTrack = m_tracks[trackIndex];
@@ -57,36 +70,60 @@ void Recording::TrackController::splitTrack(unsigned trackIndex, uint64_t after_
         return;
 
 
-    m_tracks[trackIndex].length = after_n_samples;
-    emit dataChanged(createIndex(trackIndex, COL_LENGTH), createIndex(trackIndex, COL_LENGTH));
-    m_database->updateTrackLength(m_tracks[trackIndex].start, m_tracks[trackIndex].length);
+    this->updateTrackLength(trackIndex, after_n_samples);
 
-    beginInsertRows(QModelIndex(), trackIndex+1, trackIndex+1);
-
-    Track newTrack { originalTrack.start + after_n_samples,
-                     originalTrack.length - after_n_samples,
-                     QString(),
-                     originalTrack.timestamp.addMSecs(after_n_samples * 1000 / 44100) }; //FIXME: check overflow
-    m_tracks.insert(m_tracks.begin() + trackIndex + 1, newTrack);
-    m_database->insertTrack(newTrack.start, newTrack.length, QString(), newTrack.timestamp);
-
-    endInsertRows();
+    this->insertTrack(trackIndex+1,
+                      originalTrack.start + after_n_samples,
+                      originalTrack.length - after_n_samples,
+                      QString(),
+                      originalTrack.timestamp.addMSecs(after_n_samples * 1000 / 44100)); //FIXME: check overflow
 }
 
-void Recording::TrackController::deleteTrack(unsigned trackIndex)
+void Recording::TrackController::deleteTrack(int trackIndex)
 {
-    if (trackIndex >= m_tracks.size())
+    if (!trackIndexValid(trackIndex))
         return;
 
-    beginRemoveRows(QModelIndex(), trackIndex, trackIndex);
+    emit beforeTrackRemoved(trackIndex);
+
     m_database->removeTrack(m_tracks[trackIndex].start);
     m_tracks.erase(m_tracks.begin() + trackIndex);
-    endRemoveRows();
+
+    emit trackRemoved(trackIndex);
 }
 
-Recording::TrackDataAccessor *Recording::TrackController::accessTrackData(unsigned trackId) const
+void Recording::TrackController::insertTrack(int beforeTrackIndex, uint64_t start, uint64_t length, const QString &name, const QDateTime &timestamp)
 {
-    if (trackId >= m_tracks.size())
+    emit beforeTrackAdded(beforeTrackIndex + 1);
+
+    Track newTrack { start,
+                     length,
+                     name,
+                     timestamp };
+    m_tracks.insert(m_tracks.begin() + beforeTrackIndex, newTrack);
+    m_database->insertTrack(newTrack.start, newTrack.length, newTrack.name, newTrack.timestamp);
+
+    emit trackAdded(beforeTrackIndex + 1);
+}
+
+void Recording::TrackController::updateTrackLength(int trackIndex, uint64_t newLength, bool syncToDb)
+{
+    m_tracks[trackIndex].length = newLength;
+
+    if (syncToDb)
+        m_database->updateTrackLength(m_tracks[trackIndex].start, m_tracks[trackIndex].length);
+
+    emit trackChanged(trackIndex);
+}
+
+bool Recording::TrackController::trackIndexValid(int trackIndex) const
+{
+    return trackIndex >= 0 && trackIndex < (int)m_tracks.size();
+}
+
+Recording::TrackDataAccessor *Recording::TrackController::accessTrackData(int trackId) const
+{
+    if (!trackIndexValid(trackId))
         return nullptr;
 
     return new Recording::TrackDataAccessor(m_rawDataFiles, m_tracks[trackId].start, m_tracks[trackId].length);
@@ -96,40 +133,22 @@ void Recording::TrackController::onRecordingStateChanged(bool recording, uint64_
 {
     if (recording == m_currentlyRecording)
         return; //FIXME: should this happen? should we log it?
-    else
-        m_currentlyRecording = recording;
 
-    qDebug() << "TrackController: registered recording state change, now " << (recording ? "recording" : "stopped");
+    m_currentlyRecording = recording;
+
+    qDebug() << "TrackController: registered recording state change, now" << (recording ? "recording" : "stopped") << "at sample" << n_samples;
 
     if (recording) {
         qDebug() << "Beginning Track " << m_tracks.size();
 
-        // create new track
-        beginInsertRows(QModelIndex(), (int)m_tracks.size(), (int)m_tracks.size());
-
-        Track t { n_samples, 0, QString(), QDateTime::currentDateTimeUtc() };
-        m_tracks.push_back(t);
-
-        m_database->insertTrack(t.start, t.length, t.name, t.timestamp);
-
-        endInsertRows();
+        this->insertTrack(trackCount(), n_samples, 0, QString(), QDateTime::currentDateTimeUtc());
 
         emit currentTrackTimeChanged(0);
     } else {
         // finish last track
-        m_tracks.back().length = n_samples - m_tracks.back().start;
+        this->updateTrackLength(trackCount()-1, n_samples - m_tracks.back().start);
 
         qDebug() << "Updated length of last track, now " << m_tracks.back().length;
-
-        // when we stop recording, the flags of the whole last row changed, so
-        // we will emit the event for the whole row
-        auto index_a = createIndex(m_tracks.size() - 1, COL__FIRST);
-        auto index_b = createIndex(m_tracks.size() - 1, COL__LAST);
-        emit dataChanged(index_a, index_b);
-
-        m_database->updateTrackLength(m_tracks.back().start, m_tracks.back().length);
-
-        emit currentTrackTimeChanged(m_tracks.back().length);
     }
 }
 
@@ -145,10 +164,8 @@ void Recording::TrackController::onRecordingFileChanged(const QString &new_file_
 void Recording::TrackController::onTimeUpdate(uint64_t recorded_samples)
 {
     if (m_currentlyRecording) {
-        m_tracks.back().length = recorded_samples - m_tracks.back().start;
+        this->updateTrackLength(trackCount()-1, recorded_samples - m_tracks.back().start, false);
 
-        auto index = createIndex(m_tracks.size() - 1, COL_LENGTH);
-        emit dataChanged(index, index);
         emit currentTrackTimeChanged(m_tracks.back().length);
     }
 }
@@ -158,22 +175,8 @@ void Recording::TrackController::startNewTrack(uint64_t sample_count)
     if (m_currentlyRecording) {
         qDebug() << "Beginning track " << m_tracks.size();
 
-        m_tracks.back().length = sample_count - m_tracks.back().start;
-
-        m_database->updateTrackLength(m_tracks.back().start, m_tracks.back().length);
-
-        auto index_a = createIndex(m_tracks.size() - 1, COL__FIRST);
-        auto index_b = createIndex(m_tracks.size() - 1, COL__LAST);
-        emit dataChanged(index_a, index_b);
-
-        beginInsertRows(QModelIndex(), (int)m_tracks.size(), (int)m_tracks.size());
-
-        Track t { sample_count, 0, QString(), QDateTime::currentDateTimeUtc() };
-        m_tracks.push_back(t);
-
-        endInsertRows();
-
-        m_database->insertTrack(t.start, t.length, t.name, t.timestamp);
+        this->updateTrackLength(trackCount()-1, sample_count - m_tracks.back().start);
+        this->insertTrack(trackCount(), sample_count, 0, QString(), QDateTime::currentDateTimeUtc());
 
         emit currentTrackTimeChanged(0);
     } else {
@@ -182,90 +185,13 @@ void Recording::TrackController::startNewTrack(uint64_t sample_count)
     }
 }
 
-
-int Recording::TrackController::rowCount(const QModelIndex &parent) const
+void Recording::TrackController::setTrackName(int trackIndex, const QString &name)
 {
-    (void)parent;
+    if (!trackIndexValid(trackIndex))
+        return;
 
-    return (int)m_tracks.size();
-}
+    m_tracks[trackIndex].name = name;
+    m_database->updateTrackName(m_tracks[trackIndex].start, m_tracks[trackIndex].name);
 
-int Recording::TrackController::columnCount(const QModelIndex &parent) const
-{
-    (void)parent;
-
-    return 1 + COL__LAST - COL__FIRST;
-}
-
-QVariant Recording::TrackController::data(const QModelIndex &index, int role) const
-{
-    if (!index.isValid())
-        return QVariant();
-
-    if (index.row() < 0 || index.row() >= (int)m_tracks.size())
-        return QVariant();
-
-    if (role == Qt::DisplayRole) {
-        if (index.column() == COL_TRACKNO)
-            return index.row();
-        else if (index.column() == COL_NAME)
-            return m_tracks[index.row()].name;
-        else if (index.column() == COL_START)
-            return samples_to_time(m_tracks[index.row()].start);
-        else if (index.column() == COL_LENGTH)
-            return samples_to_time(m_tracks[index.row()].length);
-        else if (index.column() == COL_TIMESTAMP)
-            return m_tracks[index.row()].timestamp.toLocalTime().toString();
-    }
-
-    return QVariant();
-}
-
-QVariant Recording::TrackController::headerData(int section, Qt::Orientation orientation, int role) const
-{
-    if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
-        if (section == COL_TRACKNO)
-            return tr("No.");
-        else if (section == COL_NAME)
-            return tr("Name");
-        else if (section == COL_START)
-            return tr("Start");
-        else if (section == COL_LENGTH)
-            return tr("Length");
-        else if (section == COL_TIMESTAMP)
-            return tr("Timestamp");
-    } else if (role == Qt::DisplayRole && orientation == Qt::Vertical) {
-        return section+1;
-    }
-
-    return QVariant();
-}
-
-Qt::ItemFlags Recording::TrackController::flags(const QModelIndex &index) const
-{
-    Qt::ItemFlags flag = 0;
-
-    if (index.column() == COL_NAME)
-        flag |= Qt::ItemIsEditable;
-
-    if (index.row() != (int)m_tracks.size()-1 || !m_currentlyRecording)
-        flag |= Qt::ItemIsSelectable | Qt::ItemIsEnabled;
-
-    return flag;
-}
-
-
-bool Recording::TrackController::setData(const QModelIndex &index, const QVariant &value, int /*role*/)
-{
-    if (index.column() == 1 && value.canConvert(QMetaType::QString) && index.row() < (int)m_tracks.size()) {
-        m_tracks[index.row()].name = value.toString();
-        emit dataChanged(index, index);
-
-
-        m_database->updateTrackName(m_tracks[index.row()].start, m_tracks[index.row()].name);
-
-        return true;
-    }
-
-    return false;
+    emit trackChanged(trackIndex);
 }

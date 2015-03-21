@@ -1,7 +1,7 @@
 #include "trackviewpane.h"
 
-#include "trackcontroller.h"
-
+#include "recording/trackcontroller.h"
+#include "recording/tracklistmodel.h"
 #include "export/exportbuttongroup.h"
 #include "recording/playbackcontrol.h"
 
@@ -21,7 +21,7 @@ TrackViewPane::TrackViewPane(TrackController *controller, QWidget *parent) :
     m_trackView = new QTableView(this);
     m_trackView->setSelectionBehavior(QAbstractItemView::SelectRows);
     m_trackView->setSelectionMode(QAbstractItemView::SingleSelection);
-    m_trackView->setModel(controller);
+    m_trackView->setModel(new TrackListModel(controller, this));
     m_trackView->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     m_trackView->setColumnHidden(0, true);
     m_trackView->horizontalHeader()->moveSection(1, 3);
@@ -73,7 +73,7 @@ void TrackViewPane::selectedRowChanged()
 {
     if (m_trackView->selectionModel()->hasSelection()) {
         //FIXME: is this a layering violation?
-        unsigned index = (unsigned)m_trackView->selectionModel()->selectedRows()[0].row();
+        int index = m_trackView->selectionModel()->selectedRows()[0].row();
 
         m_playback->trackSelected(index);
     } else {

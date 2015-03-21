@@ -41,7 +41,8 @@ SOURCES += \
     export/coordinator.cpp \
     main/fancyprogressbar.cpp \
     util/boolsignalor.cpp \
-    util/portaudio.cpp
+    util/portaudio.cpp \
+    recording/tracklistmodel.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -68,7 +69,8 @@ HEADERS += \
     export/coordinator.h \
     main/fancyprogressbar.h \
     util/boolsignalor.h \
-    util/portaudio.h
+    util/portaudio.h \
+    recording/tracklistmodel.h
 
 FORMS    += \
     main/mainwindow.ui \

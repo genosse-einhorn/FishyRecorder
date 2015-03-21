@@ -50,7 +50,7 @@ PlaybackControl::~PlaybackControl()
     delete m_ui;
 }
 
-void PlaybackControl::trackSelected(unsigned trackNo)
+void PlaybackControl::trackSelected(int trackNo)
 {
     m_currentTrackNo = trackNo;
 
