@@ -67,7 +67,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>accepted()</signal>
-   <receiver>Export::Mp3ParamsDiaog</receiver>
+   <receiver>Export::Mp3ParamsDialog</receiver>
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
@@ -83,7 +83,7 @@
   <connection>
    <sender>buttonBox</sender>
    <signal>rejected()</signal>
-   <receiver>Export::Mp3ParamsDiaog</receiver>
+   <receiver>Export::Mp3ParamsDialog</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
