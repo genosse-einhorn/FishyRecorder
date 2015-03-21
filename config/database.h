@@ -3,6 +3,7 @@
 
 #include <QObject>
 #include <QString>
+#include <QDateTime>
 #include <sqlite3.h>
 #include <vector>
 #include <map>
@@ -17,9 +18,10 @@ public:
     ~Database();
 
     struct Track {
-        uint64_t start;
-        uint64_t length;
-        QString  name;
+        uint64_t  start;
+        uint64_t  length;
+        QString   name;
+        QDateTime timestamp;
     };
 
     QString readConfigString(const QString& key, const QString& fallbackValue = QString());
@@ -33,7 +35,7 @@ signals:
 public slots:
     void writeConfigString(const QString& key, const QString& value);
     void writeConfigDouble(const QString& key, double value);
-    void insertTrack(uint64_t start, uint64_t length, const QString& name);
+    void insertTrack(uint64_t start, uint64_t length, const QString& name, const QDateTime &timestamp);
     void appendFile(uint64_t start, const QString& file);
     void updateTrackLength(uint64_t trackStart, uint64_t newLength);
     void updateTrackName(uint64_t trackStart, const QString& newName);

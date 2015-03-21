@@ -2,6 +2,7 @@
 #define TRACKRECORDINGCONTROLLER_H
 
 #include <QAbstractTableModel>
+#include <QDateTime>
 #include <cstdint>
 
 namespace Config {
@@ -30,13 +31,14 @@ public:
     TrackDataAccessor *accessTrackData(unsigned trackId) const;
 
     enum ColumnNumbers {
-        COL_TRACKNO = 0,
-        COL_NAME    = 1,
-        COL_START   = 2,
-        COL_LENGTH  = 3,
+        COL_TRACKNO   = 0,
+        COL_NAME      = 1,
+        COL_START     = 2,
+        COL_LENGTH    = 3,
+        COL_TIMESTAMP = 4,
 
-        COL__FIRST  = COL_TRACKNO,
-        COL__LAST   = COL_LENGTH
+        COL__FIRST    = COL_TRACKNO,
+        COL__LAST     = COL_TIMESTAMP
     };
 
 signals:
@@ -60,9 +62,10 @@ public:
 
 private:
     struct Track {
-        uint64_t start;
-        uint64_t length;
-        QString  name;
+        uint64_t  start;
+        uint64_t  length;
+        QString   name;
+        QDateTime timestamp;
     };
 
     std::map<uint64_t,QString> m_rawDataFiles;

@@ -47,7 +47,7 @@ namespace {
             sqlite3_finalize(stmt);
 
             // do work according to the number we got
-            if (dbVersion <= 0) {
+            if (dbVersion < 1) {
                 // our database is empty, let's create initial tables!
                 result = sqlite3_exec(db,
                                       "CREATE TABLE tracks ("
@@ -67,6 +67,17 @@ namespace {
                     goto display_warning;
 
                 dbVersion = 1;
+            }
+            if (dbVersion < 2) {
+                // Database revision two allows to save a timestamp into each track.
+                // The timestamp is the number of milliseconds since the unix epoch
+                result = sqlite3_exec(db,
+                                      "ALTER TABLE tracks ADD COLUMN timestamp",
+                                      nullptr, nullptr, nullptr);
+                if (result != SQLITE_OK)
+                    goto display_warning;
+
+                dbVersion = 2;
             }
 
             // write the db version back into the database
@@ -253,7 +264,7 @@ std::vector<Database::Track> Database::readAllTracks()
     int result;
     sqlite3_stmt *stmt = nullptr;
 
-    result = sqlite3_prepare_v2(m_db, "SELECT start, length, name FROM tracks ORDER BY start ASC", -1, &stmt, nullptr);
+    result = sqlite3_prepare_v2(m_db, "SELECT start, length, name, timestamp FROM tracks ORDER BY start ASC", -1, &stmt, nullptr);
     if (result != SQLITE_OK) {
         qWarning() << "SQL error (readAllTracks prepare):" << sqlite3_errmsg(m_db);
 
@@ -266,6 +277,7 @@ std::vector<Database::Track> Database::readAllTracks()
         t.start = (uint64_t)sqlite3_column_int64(stmt, 0);
         t.length = (uint64_t)sqlite3_column_int64(stmt, 1);
         t.name = QString::fromUtf16((const ushort*)sqlite3_column_text16(stmt, 2));
+        t.timestamp = QDateTime::fromMSecsSinceEpoch(sqlite3_column_int64(stmt, 3));
 
         retval.push_back(t);
     }
@@ -419,7 +431,7 @@ finished:
     sqlite3_finalize(stmt);
 }
 
-void Database::insertTrack(uint64_t start, uint64_t length, const QString &name)
+void Database::insertTrack(uint64_t start, uint64_t length, const QString &name, const QDateTime &timestamp)
 {
     if (!m_db)
         return;
@@ -427,7 +439,7 @@ void Database::insertTrack(uint64_t start, uint64_t length, const QString &name)
     int result;
     sqlite3_stmt *stmt = nullptr;
 
-    result = sqlite3_prepare_v2(m_db, "INSERT OR REPLACE INTO tracks (start, length, name) VALUES (:start, :length, :name)", -1, &stmt, nullptr);
+    result = sqlite3_prepare_v2(m_db, "INSERT OR REPLACE INTO tracks (start, length, name, timestamp) VALUES (:start, :length, :name, :timestamp)", -1, &stmt, nullptr);
     if (result != SQLITE_OK)
         goto complain;
 
@@ -440,6 +452,10 @@ void Database::insertTrack(uint64_t start, uint64_t length, const QString &name)
         goto complain;
 
     result = sqlite3_bind_text16(stmt, 3, name.utf16(), -1, SQLITE_TRANSIENT);
+    if (result != SQLITE_OK)
+        goto complain;
+
+    result = sqlite3_bind_int64(stmt, 4, timestamp.toMSecsSinceEpoch());
     if (result != SQLITE_OK)
         goto complain;
 

@@ -17,7 +17,7 @@ Recording::TrackController::TrackController(Config::Database *db, QObject *paren
 {
     // initialize tracks and files based on the database
     for (const auto& track : m_database->readAllTracks()) {
-        Track t { track.start, track.length, track.name };
+        Track t { track.start, track.length, track.name, track.timestamp };
         m_tracks.push_back(t);
     }
     for (const auto& file : m_database->readAllFiles()) {
@@ -63,9 +63,12 @@ void Recording::TrackController::splitTrack(unsigned trackIndex, uint64_t after_
 
     beginInsertRows(QModelIndex(), trackIndex+1, trackIndex+1);
 
-    Track newTrack { originalTrack.start + after_n_samples, originalTrack.length - after_n_samples, QString() };
+    Track newTrack { originalTrack.start + after_n_samples,
+                     originalTrack.length - after_n_samples,
+                     QString(),
+                     originalTrack.timestamp.addMSecs(after_n_samples * 1000 / 44100) }; //FIXME: check overflow
     m_tracks.insert(m_tracks.begin() + trackIndex + 1, newTrack);
-    m_database->insertTrack(newTrack.start, newTrack.length, QString());
+    m_database->insertTrack(newTrack.start, newTrack.length, QString(), newTrack.timestamp);
 
     endInsertRows();
 }
@@ -104,10 +107,10 @@ void Recording::TrackController::onRecordingStateChanged(bool recording, uint64_
         // create new track
         beginInsertRows(QModelIndex(), (int)m_tracks.size(), (int)m_tracks.size());
 
-        Track t { n_samples, 0, QString() };
+        Track t { n_samples, 0, QString(), QDateTime::currentDateTimeUtc() };
         m_tracks.push_back(t);
 
-        m_database->insertTrack(n_samples, 0, QString());
+        m_database->insertTrack(t.start, t.length, t.name, t.timestamp);
 
         endInsertRows();
 
@@ -165,12 +168,12 @@ void Recording::TrackController::startNewTrack(uint64_t sample_count)
 
         beginInsertRows(QModelIndex(), (int)m_tracks.size(), (int)m_tracks.size());
 
-        Track t { sample_count, 0, QString() };
+        Track t { sample_count, 0, QString(), QDateTime::currentDateTimeUtc() };
         m_tracks.push_back(t);
 
         endInsertRows();
 
-        m_database->insertTrack(sample_count, 0, QString());
+        m_database->insertTrack(t.start, t.length, t.name, t.timestamp);
 
         emit currentTrackTimeChanged(0);
     } else {
@@ -191,7 +194,7 @@ int Recording::TrackController::columnCount(const QModelIndex &parent) const
 {
     (void)parent;
 
-    return 4;
+    return 1 + COL__LAST - COL__FIRST;
 }
 
 QVariant Recording::TrackController::data(const QModelIndex &index, int role) const
@@ -211,6 +214,8 @@ QVariant Recording::TrackController::data(const QModelIndex &index, int role) co
             return samples_to_time(m_tracks[index.row()].start);
         else if (index.column() == COL_LENGTH)
             return samples_to_time(m_tracks[index.row()].length);
+        else if (index.column() == COL_TIMESTAMP)
+            return m_tracks[index.row()].timestamp.toLocalTime().toString();
     }
 
     return QVariant();
@@ -227,6 +232,8 @@ QVariant Recording::TrackController::headerData(int section, Qt::Orientation ori
             return tr("Start");
         else if (section == COL_LENGTH)
             return tr("Length");
+        else if (section == COL_TIMESTAMP)
+            return tr("Timestamp");
     } else if (role == Qt::DisplayRole && orientation == Qt::Vertical) {
         return section+1;
     }
