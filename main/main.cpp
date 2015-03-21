@@ -3,10 +3,17 @@
 
 #include <QFont>
 #include <QFontDatabase>
+#include <QTranslator>
 
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    // setup translations
+    QTranslator translator;
+    translator.load(QLocale::system(), ":/locale/");
+
+    a.installTranslator(&translator);
 
     // setup font substitution, since windows fonts miss some glyphs
     QFontDatabase::addApplicationFont(":/DejaVuSans.ttf");

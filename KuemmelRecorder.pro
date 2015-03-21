@@ -84,6 +84,8 @@ FORMS    += \
     main/aboutpane.ui \
     export/mp3paramsdialog.ui
 
+TRANSLATIONS = l10n/recorder_de.ts
+
 win32 {
     # presentation subsystem is windows only (unfortunately)
 
