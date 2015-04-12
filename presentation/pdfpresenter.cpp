@@ -11,55 +11,42 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QtWinExtras>
 #include <windows.h>
-#include <math.h>
+#include <cmath>
 #include <memory>
 #include <vector>
 
 namespace {
     const int ICON_SIZE = 200;
 
-    std::pair<int /*pageno */, QPixmap> createThumbnail(std::shared_ptr<Poppler::Document> pdf, int pageno) {
-        if (!pdf || pageno < 0 || pageno >= pdf->numPages())
-            return std::pair<int, QPixmap>(-1, QPixmap());
-
-        std::unique_ptr<Poppler::Page> page(pdf->page(pageno));
-
-        if (!page)
-            return std::pair<int, QPixmap>(-1, QPixmap());
-
-        double xres = ICON_SIZE/page->pageSizeF().width()*72;
-        double yres = ICON_SIZE/page->pageSizeF().height()*72;
-
-        double res = qMin(xres, yres);
-
-        return std::pair<int, QPixmap>(pageno, QPixmap::fromImage(page->renderToImage(res, res)));
-    }
-
-    QPixmap createImage(std::shared_ptr<Poppler::Document> pdf, int pageno, int width, int height) {
+    QPixmap createImage(std::shared_ptr<Poppler::Document> pdf, int pageno, int maxWidth, int maxHeight) {
         std::unique_ptr<Poppler::Page> page(pdf->page(pageno));
         if (!page)
             return QPixmap();
 
-        double xres = width/page->pageSizeF().width()*72;
-        double yres = height/page->pageSizeF().height()*72;
+        //HACK: Poppler does floating point differently and somtimes ends up with interesting white
+        // lines at the edges. Setting the page background color to black would fix the problem but
+        // breaks most PDFs. The only solution is to crop a line of pixels. I'm sorry.
 
-        double res = qMin(xres, yres);
+        // Okular has the same Problem. Evince gets it right, but I don't know how. Maybe it's because
+        // Evince uses the Cairo backend, while the Qt5 binding can either use a custom Qt backend with
+        // horrible results or the internal Splash backend, which creates those strange white lines.
 
-        QImage img = page->renderToImage(res, res);
+        double xres = (maxWidth  + 1) / page->pageSizeF().width()  * 72.0;
+        double yres = (maxHeight + 1) / page->pageSizeF().height() * 72.0;
 
-        //HACK: Poppler will round the coordinates, which might lead to a
-        // single row or column filled with the page background color.
-        // This might be unfortunate if we wanted to display a completely
-        // black page (since the page background is white and can not be
-        // changed since a lot of PDFs expect it to be white). Worst case scenario
-        // is chopping off a completely fine line of pixels.
-        int expected_width = floor(page->pageSizeF().width()*res/72);
-        int expected_height = floor(page->pageSizeF().height()*res/72);
+        double res = std::min(xres, yres);
 
-        QPixmap pixmap(expected_width, expected_height);
-        QPainter(&pixmap).drawImage(0, 0, img);
 
-        return pixmap;
+        int targetWidth  = int(res / 72.0 * page->pageSizeF().width()  - 0.5);
+        int targetHeight = int(res / 72.0 * page->pageSizeF().height() - 0.5);
+
+        QImage img = page->renderToImage(res, res, 0, 0, std::min(maxWidth, targetWidth), std::min(maxHeight, targetHeight));
+
+        return QPixmap::fromImage(std::move(img));
+    }
+
+    std::pair<int /*pageno */, QPixmap> createThumbnail(std::shared_ptr<Poppler::Document> pdf, int pageno) {
+        return std::pair<int, QPixmap>(pageno, createImage(pdf, pageno, ICON_SIZE, ICON_SIZE));
     }
 }
 
