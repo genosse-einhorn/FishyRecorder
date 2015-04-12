@@ -25,16 +25,6 @@
     </widget>
    </item>
    <item>
-    <widget class="QPushButton" name="exportAsFlacBtn">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
-     <property name="text">
-      <string>Export as FLAC files</string>
-     </property>
-    </widget>
-   </item>
-   <item>
     <widget class="QPushButton" name="exportAsMp3Btn">
      <property name="text">
       <string>Export as MP3 files</string>

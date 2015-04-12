@@ -66,7 +66,10 @@
       <item>
        <widget class="QLabel" name="label">
         <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;You decided to quit the Recorder, but there is still data you may need or want later. How do you want to proceed?&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         <string>You decided to quit the Recorder, but there is still data you may need or want later. How do you want to proceed?</string>
+        </property>
+        <property name="textFormat">
+         <enum>Qt::PlainText</enum>
         </property>
         <property name="wordWrap">
          <bool>true</bool>

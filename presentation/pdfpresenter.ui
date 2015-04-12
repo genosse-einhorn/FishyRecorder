@@ -72,7 +72,7 @@
       </size>
      </property>
      <property name="text">
-      <string>End presentation</string>
+      <string>Close PDF</string>
      </property>
     </widget>
    </item>

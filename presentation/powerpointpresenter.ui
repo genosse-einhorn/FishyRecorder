@@ -48,7 +48,7 @@
    <item row="1" column="0">
     <widget class="QPushButton" name="endBtn">
      <property name="text">
-      <string>End Presentation</string>
+      <string>Close PowerPoint</string>
      </property>
     </widget>
    </item>

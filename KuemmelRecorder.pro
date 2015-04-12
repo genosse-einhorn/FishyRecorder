@@ -90,7 +90,7 @@ win32 {
     # presentation subsystem is windows only (unfortunately)
 
     #FIXME: poppler-qt5.pc is incomplete in MXE, need to work around that
-    PKGCONFIG += poppler-qt5 lcms2
+    PKGCONFIG += poppler-qt5 lcms2 freetype2
     QT += xml
 
     QT += winextras axcontainer
