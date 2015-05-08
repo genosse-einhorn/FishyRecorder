@@ -179,12 +179,27 @@ void ScreenViewRenderer::windowResized(const QRect &size)
 
     m_context->OMSetRenderTargets(1, com::single_item_array(m_renderTarget), nullptr);
 
-    // Create and set a viewport
+    // Create and set a viewport, preserving the original aspect ratio
+    float desktopRatio = float(m_desktopWidth)/float(m_desktopHeight);
+    float windowRatio = float(size.width())/float(size.height());
+
+    int w, h;
+    if (desktopRatio > windowRatio) {
+        // desktop is wider than the window -> crop height
+        w = size.width();
+        h = int(float(size.width()) / desktopRatio);
+    } else {
+        // window is wider than the desktop -> crop width
+        h = size.height();
+        w = int(float(size.height()) * desktopRatio);
+    }
+
+
     D3D11_VIEWPORT viewport = {
-        .TopLeftX = 0,
-        .TopLeftY = 0,
-        .Width    = static_cast<FLOAT>(size.width()),
-        .Height   = static_cast<FLOAT>(size.height()),
+        .TopLeftX = FLOAT((size.width() - w)/2),
+        .TopLeftY = FLOAT((size.height() - h)/2),
+        .Width    = FLOAT(w),
+        .Height   = FLOAT(h),
         .MinDepth = 0,
         .MaxDepth = 0
     };
