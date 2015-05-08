@@ -95,20 +95,25 @@ win32 {
 
     QT += winextras axcontainer
 
+    INCLUDEPATH += external/d3d-headers
+
     SOURCES +=  \
         presentation/presentationtab.cpp \
         presentation/screenviewcontrol.cpp \
-        external/qwinhost.cpp \
         presentation/welcomepane.cpp \
         presentation/pdfpresenter.cpp \
-        presentation/powerpointpresenter.cpp
+        presentation/powerpointpresenter.cpp \
+        presentation/screenviewrenderer.cpp
     HEADERS += \
         presentation/presentationtab.h \
         presentation/screenviewcontrol.h \
-        external/qwinhost.h \
         presentation/welcomepane.h \
         presentation/pdfpresenter.h \
-    presentation/powerpointpresenter.h
+        presentation/powerpointpresenter.h \
+        util/com.h \
+        presentation/screenviewrenderer.h \
+        presentation/screenviewshaders.h \
+        util/win32.h
     FORMS += \
         presentation/presentationtab.ui \
         presentation/welcomepane.ui \
@@ -141,3 +146,5 @@ INCLUDEPATH += external
 
 RESOURCES += \
     res/stuff.qrc
+
+DISTFILES +=

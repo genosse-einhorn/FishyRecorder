@@ -1,18 +1,26 @@
 #ifndef PRESENTATION_SCREENVIEWCONTROL_H
 #define PRESENTATION_SCREENVIEWCONTROL_H
 
-#include "external/qwinhost.h"
+#include <QWidget>
 
-class QTimer;
+class QThread;
 
 namespace Presentation {
 
-class ScreenViewControl : public QWinHost
+class ScreenViewRenderer;
+
+class ScreenViewControl : public QWidget
 {
     Q_OBJECT
 public:
     explicit ScreenViewControl(QWidget *parent = 0);
     ~ScreenViewControl();
+
+    QPaintEngine* paintEngine() const override { return nullptr; }
+
+protected:
+      void resizeEvent(QResizeEvent* evt) override;
+      void paintEvent(QPaintEvent* evt) override;
 
 signals:
 
@@ -21,18 +29,8 @@ public slots:
     void setExcludedWindow(HWND win);
 
 private:
-    QRect   m_screen          = QRect(0, 0, 0, 0);
-
-    QSize getViewWindowSize();
-
-    // QWinHost interface
-protected:
-    virtual HWND createWindow(HWND parent, HINSTANCE instance);
-
-    // QWidget interface
-protected:
-    virtual void resizeEvent(QResizeEvent *);
-    virtual void showEvent(QShowEvent *);
+    QThread *m_thread = nullptr;
+    ScreenViewRenderer *m_renderer = nullptr;
 };
 
 } // namespace Presentation

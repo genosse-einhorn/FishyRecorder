@@ -8,7 +8,6 @@
     </qresource>
     <qresource prefix="/">
         <file>DejaVuSans.ttf</file>
-        <file>screenview-x86.dll</file>
     </qresource>
     <qresource prefix="/locale">
         <file alias="de.qm">../l10n/recorder_de.qm</file>
