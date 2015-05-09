@@ -79,71 +79,86 @@ PowerpointPresenter *PowerpointPresenter::loadPowerpointFile(const QString &file
 {
     std::unique_ptr<PowerpointPresenter> presenter(new PowerpointPresenter);
 
-    presenter->m_script = presenter->m_scripts->load(
-        "var app          = null;"
-        "var presentation = null;"
-        "var view         = null;"
-        "var window       = null;"
-        ""
-        "function getHwnd() {"
-        "   return window.HWND;"
-        "}\n"
-        ""
-        "function open(filename) {"
-        "   app = new ActiveXObject('PowerPoint.Application');"
-        "   /*app.Visible = true;*/"
-        "   presentation = app.Presentations.Open(filename, true, true, false);"
-        "   "
-        "   return presentation;"
-        "}\n"
-        ""
-        "function present() {"
-        "   var settings = presentation.SlideShowSettings;"
-        "   settings.ShowType = 1;"
-        "   settings.LoopUntilStopped = true;"
-        "   window = settings.Run();"
-        "   view = window.View;"
-        ""
-        "   return window;"
-        "}\n"
-        ""
-        "function next() {"
-        "   view.Next();"
-        "}\n"
-        ""
-        "function previous() {"
-        "   view.Previous();"
-        "}\n"
-        ""
-        "function close() {"
-        "   try {"
-        "       view.Exit();"
-        "   } catch (e) {}\n"
-        "   try {"
-        "       presentation.Close();"
-        "   } catch (e) {}"
-        "}\n"
-        ""
-        "function getNumSlides() {"
-        "   return presentation.Slides.Count;"
-        "}\n"
-        ""
-        "function goToSlide(slideno) {"
-        "   return view.GotoSlide(slideno);"
-        "}\n"
-        ""
-        "function copySlide(slideno) {"
-        "   presentation.Slides.Item(slideno).Copy();"
-        "}\n"
-        ""
-        "function exportSlide(slideno, filename) {"
-        "   presentation.Slides.Item(slideno).Export(filename, 'PNG');"
-        "}\n"
-        ""
-        "function getCurrentSlideNo() {"
-        "   return view.Slide.SlideIndex;"
-        "}\n",
-        "ppcontrol", "JScript");
+    presenter->m_script = presenter->m_scripts->load(R"script(
+        var app          = null;
+        var presentation = null;
+        var view         = null;
+        var window       = null;
+
+        function getHwnd() {
+            return window.HWND;
+        }
+
+        function open(filename) {
+            app = new ActiveXObject('PowerPoint.Application');
+
+            // At least PowerPoint 2013 refuses to open a presentation
+            // with spaces in the file name, unless you add extra quotes.
+            // Older versions (like Office 2000) choke on the quotes and
+            // demand the real, unqoted string.
+            // Don't ask why.
+
+            try {
+                presentation = app.Presentations.Open(filename, true, true, false);
+            } catch (e) {
+                presentation = app.Presentations.Open('"' + filename + '"', true, true, false);
+            }
+
+            return presentation;
+        }
+
+        function present() {
+            var settings = presentation.SlideShowSettings;
+
+            settings.ShowType = 3; // Kiosk
+            settings.LoopUntilStopped = true;
+
+            window = settings.Run();
+            view = window.View;
+
+            window.Activate();
+
+            return window;
+        }
+
+        function next() {
+            view.Next();
+        }
+
+        function previous() {
+            view.Previous();
+        }
+
+        function close() {
+            try {
+               view.Exit();
+           } catch (e) {}
+           try {
+               presentation.Close();
+           } catch (e) {}
+        }
+
+        function getNumSlides() {
+            return presentation.Slides.Count;
+        }
+
+        function goToSlide(slideno) {
+            return view.GotoSlide(slideno);
+        }
+
+        function copySlide(slideno) {
+            presentation.Slides.Item(slideno).Copy();
+        }
+
+        function exportSlide(slideno, filename) {
+            presentation.Slides.Item(slideno).Export(filename, 'PNG');
+        }
+
+        function getCurrentSlideNo() {
+           return view.Slide.SlideIndex;
+        }
+
+    )script", "ppcontrol", "JScript");
 
     if (!presenter->m_script) {
         qDebug() << "Loading the script failed :(";
