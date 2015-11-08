@@ -6,11 +6,8 @@
 #include <QPixmap>
 #include <memory>
 
+typedef struct _PopplerDocument PopplerDocument;
 class QLabel;
-
-namespace Poppler {
-class Document;
-}
 
 namespace Presentation {
 
@@ -27,7 +24,7 @@ public:
 
     ~PdfPresenter();
 
-signals:
+Q_SIGNALS:
     void closeRequested();
     void canNextPageChanged(bool can);
     void canPrevPageChanged(bool can);
@@ -36,12 +33,12 @@ public:
     bool canNextPage() { return m_canNextPage; }
     bool canPrevPage() { return m_canPrevPage; }
 
-public slots:
+public Q_SLOTS:
     void setScreen(const QRect& screen);
     void nextPage();
     void previousPage();
 
-private slots:
+private Q_SLOTS:
     void closeBtnClicked();
     void itemSelected();
     void savePreview();
@@ -56,9 +53,9 @@ private:
 
     Ui::PdfPresenter *ui;
 
-    std::shared_ptr<Poppler::Document>  m_pdf                  = nullptr;
-    QWidget                            *m_presentationWindow   = nullptr;
-    QLabel                             *m_presentationImageLbl = nullptr;
+    PopplerDocument *m_pdf                  = nullptr;
+    QWidget         *m_presentationWindow   = nullptr;
+    QLabel          *m_presentationImageLbl = nullptr;
 
     int presentationWidth() { if (m_presentationWindow) return m_presentationWindow->width(); else return 10; }
     int presentationHeight() { if (m_presentationWindow) return m_presentationWindow->height(); else return 10; }
@@ -74,13 +71,13 @@ private:
     void setCanNextPage(bool can) {
         if (m_canNextPage != can) {
             m_canNextPage = can;
-            emit canNextPageChanged(can);
+            Q_EMIT canNextPageChanged(can);
         }
     }
     void setCanPrevPage(bool can) {
         if (m_canPrevPage != can) {
             m_canPrevPage = can;
-            emit canPrevPageChanged(can);
+            Q_EMIT canPrevPageChanged(can);
         }
     }
 };
