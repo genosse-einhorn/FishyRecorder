@@ -101,7 +101,6 @@ win32 {
         presentation/screenviewcontrol.cpp \
         presentation/welcomepane.cpp \
         presentation/pdfpresenter.cpp \
-        presentation/powerpointpresenter.cpp \
         presentation/screenviewrenderer.cpp \
         external/waitingspinnerwidget.cpp
     HEADERS += \
@@ -109,7 +108,6 @@ win32 {
         presentation/screenviewcontrol.h \
         presentation/welcomepane.h \
         presentation/pdfpresenter.h \
-        presentation/powerpointpresenter.h \
         util/com.h \
         presentation/screenviewrenderer.h \
         presentation/screenviewshaders.h \
@@ -118,8 +116,7 @@ win32 {
     FORMS += \
         presentation/presentationtab.ui \
         presentation/welcomepane.ui \
-        presentation/pdfpresenter.ui \
-        presentation/powerpointpresenter.ui
+        presentation/pdfpresenter.ui
 }
 
 CONFIG(debug, debug|release) {

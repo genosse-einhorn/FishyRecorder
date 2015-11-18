@@ -12,6 +12,7 @@ class PresentationTab;
 }
 
 class WelcomePane;
+class PdfPresenter;
 
 class PresentationTab : public QWidget
 {
@@ -54,6 +55,8 @@ private:
     bool     m_whileSettingOverlay = false;
 
     QRect m_currentScreen { 0, 0, 0, 0 };
+
+    Presentation::PdfPresenter *doPresentPdf(const QString &filename);
 };
 
 

@@ -3,7 +3,6 @@
 #include "presentation/screenviewcontrol.h"
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
-#include "presentation/powerpointpresenter.h"
 #include "util/misc.h"
 
 #include <QGridLayout>
@@ -15,6 +14,8 @@
 #include <QAbstractNativeEventFilter>
 #include <QAbstractEventDispatcher>
 #include <QtWinExtras>
+
+#include <QAxObject>
 
 #include <windows.h>
 
@@ -115,19 +116,12 @@ void PresentationTab::clear()
     emit blankChanged(false);
 }
 
-void PresentationTab::openPdf()
+PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
 {
-    QString filename = QFileDialog::getOpenFileName(this, tr("Open PDF"),
-                                                    QString(),
-                                                    tr("PDF files (*.pdf)"));
-
-    if (!filename.size())
-        return;
-
     if (m_currentScreen.width() < 1) {
         QMessageBox::critical(this, tr("No presentation screen"), tr("Select a screen to present on, first"));
 
-        return;
+        return nullptr;
     }
 
     PdfPresenter *presenter = PdfPresenter::loadPdfFile(filename);
@@ -136,7 +130,7 @@ void PresentationTab::openPdf()
     if (!presenter) {
         QMessageBox::critical(this, tr("Could not open PDF"), tr("Unknown error occured"));
 
-        return;
+        return nullptr;
     }
 
     int index = ui->sidebar->insertWidget(-1, presenter);
@@ -157,6 +151,20 @@ void PresentationTab::openPdf()
     // initially sync nex/prev button activations
     emit canNextSlideChanged(presenter->canNextPage());
     emit canPrevSlideChanged(presenter->canPrevPage());
+
+    return presenter;
+}
+
+void PresentationTab::openPdf()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open PDF"),
+                                                    QString(),
+                                                    tr("PDF files (*.pdf)"));
+
+    if (!filename.size())
+        return;
+
+    doPresentPdf(filename);
 }
 
 void PresentationTab::openPpt()
@@ -168,35 +176,41 @@ void PresentationTab::openPpt()
     if (!filename.size())
         return;
 
-    if (m_currentScreen.width() < 1) {
-        QMessageBox::critical(this, tr("No presentation screen"), tr("Select a screen to present on, first"));
+    // Convert the PPT to a PDF file and use that
+    // PowerPoint hasn't been very reliable for us, while the PDF viewer has proven
+    // to be rock solid. PowerPoint can export to PDF since at least Office 2007 SP2
+    QTemporaryDir *pdfdir = new QTemporaryDir();
+    QString pdffile = QString("%1/a.pdf").arg(pdfdir->path());
+    PdfPresenter *presenter = nullptr;
 
-        return;
-    }
+    QAxObject powerpoint("PowerPoint.Application");
+    QAxObject *presentations, *presentation;
+    if (powerpoint.isNull())
+        goto error;
 
-    PowerpointPresenter *presenter = PowerpointPresenter::loadPowerpointFile(filename);
+    presentations = powerpoint.querySubObject("Presentations");
+    if (!presentations)
+        goto error;
 
+    presentation = presentations->querySubObject("Open(const QString&, int, int, int)", QDir::toNativeSeparators(filename), -1, -1, 0);
+    if (!presentation)
+        goto error;
 
-    if (!presenter) {
-        QMessageBox::critical(this, tr("Could not open PPT"), tr("Unknown error occured"));
+    presentation->dynamicCall("SaveAs(const QString&, int)", QDir::toNativeSeparators(pdffile), 32);
+    presentation->dynamicCall("Close()");
 
-        return;
-    }
+    presenter = doPresentPdf(pdffile);
+    if (presenter)
+        QObject::connect(presenter, &QObject::destroyed, [=](){
+            delete pdfdir;
+        });
+    else
+        delete pdfdir;
 
-    int index = ui->sidebar->insertWidget(-1, presenter);
-    ui->sidebar->setCurrentIndex(index);
-
-    QObject::connect(presenter, &PowerpointPresenter::closeRequested, presenter, &QObject::deleteLater);
-    QObject::connect(presenter, &PowerpointPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
-
-    QObject::connect(this, &PresentationTab::sigNextSlide, presenter, &PowerpointPresenter::nextPage);
-    QObject::connect(this, &PresentationTab::sigPreviousSlide, presenter, &PowerpointPresenter::previousPage);
-    QObject::connect(this, &PresentationTab::sigScreenChange, presenter, &PowerpointPresenter::setScreen);
-
-    emit this->canNextSlideChanged(true);
-    emit this->canPrevSlideChanged(true);
-
-    presenter->setScreen(m_currentScreen);
+    return;
+error:
+    QMessageBox::critical(this, tr("Could not launch PPT"), tr("The PPT file could not be loaded."));
+    delete pdfdir;
 }
 
 } // namespace Presentation
