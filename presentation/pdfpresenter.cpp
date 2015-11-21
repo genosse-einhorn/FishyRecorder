@@ -1,13 +1,7 @@
-// Conflicts with glib
-#define QT_NO_KEYWORDS
-
 #include "pdfpresenter.h"
 #include "ui_pdfpresenter.h"
 
-#include "external/waitingspinnerwidget.h"
-
-#include <poppler.h>
-#include <cairo.h>
+#include <poppler-qt5.h>
 #include <QGridLayout>
 #include <QLabel>
 #include <QDebug>
@@ -24,42 +18,34 @@
 namespace {
     const int ICON_SIZE = 200;
 
-    QPixmap createImage(PopplerDocument *pdf, int pageno, int maxWidth, int maxHeight) {
-        if ((pageno < 0) || (pageno >= poppler_document_get_n_pages(pdf))) {
-            g_object_unref(pdf);
+    QPixmap createImage(std::shared_ptr<Poppler::Document> pdf, int pageno, int maxWidth, int maxHeight) {
+        std::unique_ptr<Poppler::Page> page(pdf->page(pageno));
+        if (!page)
             return QPixmap();
-        }
 
-        PopplerPage *page = poppler_document_get_page(pdf, pageno);
+        //HACK: Poppler does floating point differently and somtimes ends up with interesting white
+        // lines at the edges. Setting the page background color to black would fix the problem but
+        // breaks most PDFs. The only solution is to crop a line of pixels. I'm sorry.
 
-        double size_x, size_y;
-        poppler_page_get_size(page, &size_x, &size_y);
+        // Okular has the same Problem. Evince gets it right, but I don't know how. Maybe it's because
+        // Evince uses the Cairo backend, while the Qt5 binding can either use a custom Qt backend with
+        // horrible results or the internal Splash backend, which creates those strange white lines.
 
-        double xscale = (maxWidth+1) / size_x;
-        double yscale = (maxHeight+1) / size_y;
-        double scale = std::min(xscale, yscale);
+        double xres = (maxWidth  + 1) / page->pageSizeF().width()  * 72.0;
+        double yres = (maxHeight + 1) / page->pageSizeF().height() * 72.0;
 
-        QImage img(std::min(int(size_x * scale), maxWidth),
-                   std::min(int(size_y * scale), maxHeight),
-                   QImage::Format_ARGB32_Premultiplied);
-        img.fill(0);
+        double res = std::min(xres, yres);
 
-        cairo_surface_t *sf = cairo_image_surface_create_for_data(img.bits(), CAIRO_FORMAT_ARGB32, img.width(), img.height(), img.bytesPerLine());
-        cairo_t *cr = cairo_create(sf);
 
-        cairo_scale(cr, scale, scale);
-        poppler_page_render(page, cr);
+        int targetWidth  = int(res / 72.0 * page->pageSizeF().width()  - 0.5);
+        int targetHeight = int(res / 72.0 * page->pageSizeF().height() - 0.5);
 
-        cairo_destroy(cr);
-        cairo_surface_destroy(sf);
+        QImage img = page->renderToImage(res, res, 0, 0, std::min(maxWidth, targetWidth), std::min(maxHeight, targetHeight));
 
-        g_object_unref(page);
-        g_object_unref(pdf);
         return QPixmap::fromImage(std::move(img));
-
     }
 
-    std::pair<int /*pageno */, QPixmap> createThumbnail(PopplerDocument *pdf, int pageno) {
+    std::pair<int /*pageno */, QPixmap> createThumbnail(std::shared_ptr<Poppler::Document> pdf, int pageno) {
         return std::pair<int, QPixmap>(pageno, createImage(pdf, pageno, ICON_SIZE, ICON_SIZE));
     }
 }
@@ -71,8 +57,6 @@ PdfPresenter::PdfPresenter(QWidget *parent) :
     ui(new Ui::PdfPresenter)
 {
     ui->setupUi(this);
-    ui->spinner->setInnerRadius(5);
-    ui->spinner->setLineLength(5);
 
     QObject::connect(ui->deleteBtn, &QAbstractButton::clicked, this, &PdfPresenter::closeBtnClicked);
     QObject::connect(ui->slideList, &QListWidget::itemSelectionChanged, this, &PdfPresenter::itemSelected);
@@ -96,7 +80,7 @@ void PdfPresenter::kickoffPreviewList()
     ui->slideList->setWrapping(false);
     ui->slideList->setMaximumWidth(ICON_SIZE + 50);
 
-    for (int i = 0; i < poppler_document_get_n_pages(m_pdf); ++i) {
+    for (int i = 0; i < m_pdf->numPages(); ++i) {
         QListWidgetItem *item = new QListWidgetItem(QString("%1").arg(i+1));
 
         ui->slideList->addItem(item);
@@ -104,7 +88,6 @@ void PdfPresenter::kickoffPreviewList()
         auto *watcher = new QFutureWatcher<std::pair<int, QPixmap>>(this);
         QObject::connect(watcher, &QFutureWatcher<std::pair<int, QPixmap>>::finished, this, &PdfPresenter::savePreview);
 
-        g_object_ref(m_pdf);
         watcher->setFuture(QtConcurrent::run(createThumbnail, m_pdf, i));
     }
 }
@@ -131,18 +114,20 @@ void PdfPresenter::imageFinished()
 {
     auto *watcher = static_cast<QFutureWatcher<QPixmap>*>(QObject::sender());
 
-    if (watcher == m_thisPage) {
+    if (watcher == m_thisPage)
         m_presentationImageLbl->setPixmap(watcher->result());
-        ui->spinner->stop();
-    }
 }
 
 void PdfPresenter::updatePresentedPage()
 {
     setCanPrevPage(m_currentPageNo > 0);
-    setCanNextPage(m_currentPageNo < poppler_document_get_n_pages(m_pdf)-1);
+    setCanNextPage(m_currentPageNo < m_pdf->numPages()-1);
 
     if (!m_presentationWindow || !m_presentationImageLbl)
+        return;
+
+    Poppler::Page *page = m_pdf->page(m_currentPageNo);
+    if (!page)
         return;
 
     if (ui->slideList->currentRow() != m_currentPageNo) {
@@ -150,24 +135,26 @@ void PdfPresenter::updatePresentedPage()
         ui->slideList->scrollToItem(ui->slideList->item(m_currentPageNo), QAbstractItemView::PositionAtCenter);
     }
 
-    if (m_thisPage->isFinished()) {
+    if (m_thisPage->isFinished())
         m_presentationImageLbl->setPixmap(m_thisPage->result());
-        ui->spinner->stop();
-    } else {
+    else
         m_presentationImageLbl->setPixmap(QPixmap());
-        ui->spinner->start();
-    }
 }
 
 PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
 {
-    QByteArray utf8_uri = QUrl::fromLocalFile(fileName).url().toUtf8();
-    PopplerDocument *doc = poppler_document_new_from_file(utf8_uri.data(), nullptr, nullptr);
+    Poppler::Document *doc = Poppler::Document::load(fileName);
+
+    doc->setRenderHint(Poppler::Document::Antialiasing, true);
+    doc->setRenderHint(Poppler::Document::TextAntialiasing, true);
+    doc->setRenderHint(Poppler::Document::TextHinting, true);
+    doc->setRenderHint(Poppler::Document::TextSlightHinting, true);
+
     if (!doc)
         return nullptr;
 
     PdfPresenter *presenter = new PdfPresenter();
-    presenter->m_pdf = doc;
+    presenter->m_pdf.reset(doc);
 
     presenter->kickoffPreviewList();
 
@@ -177,8 +164,8 @@ PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
 PdfPresenter::~PdfPresenter()
 {
     delete ui;
-    g_object_unref(m_pdf);
 
+    qDebug() << "Deleting the presentation window";
     delete m_presentationWindow;
 }
 
@@ -223,7 +210,7 @@ void PdfPresenter::setScreen(const QRect &screen)
 
 void PdfPresenter::nextPage()
 {
-    if (m_currentPageNo + 1 >= poppler_document_get_n_pages(m_pdf))
+    if (m_currentPageNo + 1 >= m_pdf->numPages())
         return;
 
     m_currentPageNo += 1;
@@ -231,7 +218,6 @@ void PdfPresenter::nextPage()
     m_prevPage = m_thisPage;
     m_thisPage = m_nextPage;
     m_nextPage = oldPrev;
-    g_object_ref(m_pdf);
     m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
 
     updatePresentedPage();
@@ -247,7 +233,6 @@ void PdfPresenter::previousPage()
     m_nextPage = m_thisPage;
     m_thisPage = m_prevPage;
     m_prevPage = oldNext;
-    g_object_ref(m_pdf);
     m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
 
     updatePresentedPage();
@@ -256,15 +241,14 @@ void PdfPresenter::previousPage()
 
 void PdfPresenter::resetPresentationPixmaps()
 {
-    for (int i = 0; i < 3; ++i) g_object_ref(m_pdf);
-    m_thisPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo  , presentationWidth(), presentationHeight()));
     m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
+    m_thisPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo  , presentationWidth(), presentationHeight()));
     m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
 }
 
 void PdfPresenter::closeBtnClicked()
 {
-    Q_EMIT closeRequested();
+    emit closeRequested();
 }
 
 void PdfPresenter::itemSelected()
@@ -274,7 +258,7 @@ void PdfPresenter::itemSelected()
         return;
 
     int pageNo = items.first()->text().toInt() - 1;
-    if (pageNo < 0 || pageNo >= poppler_document_get_n_pages(m_pdf) || m_currentPageNo == pageNo)
+    if (pageNo < 0 || pageNo >= m_pdf->numPages() || m_currentPageNo == pageNo)
         return;
 
     m_currentPageNo = pageNo;

@@ -90,7 +90,8 @@ win32 {
     # presentation subsystem is windows only (unfortunately)
 
     #FIXME: poppler-qt5.pc is incomplete in MXE, need to work around that
-    PKGCONFIG += poppler-glib
+    PKGCONFIG += poppler-qt5 lcms2 freetype2
+    QT += xml
 
     QT += winextras axcontainer
 
@@ -101,8 +102,7 @@ win32 {
         presentation/screenviewcontrol.cpp \
         presentation/welcomepane.cpp \
         presentation/pdfpresenter.cpp \
-        presentation/screenviewrenderer.cpp \
-        external/waitingspinnerwidget.cpp
+        presentation/screenviewrenderer.cpp
     HEADERS += \
         presentation/presentationtab.h \
         presentation/screenviewcontrol.h \
@@ -111,8 +111,7 @@ win32 {
         util/com.h \
         presentation/screenviewrenderer.h \
         presentation/screenviewshaders.h \
-        util/win32.h \
-        external/waitingspinnerwidget.h
+        util/win32.h
     FORMS += \
         presentation/presentationtab.ui \
         presentation/welcomepane.ui \
