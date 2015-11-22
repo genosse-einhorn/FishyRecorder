@@ -97,7 +97,7 @@ FORMS    += \
 TRANSLATIONS = l10n/recorder_de.ts
 
 win32 {
-    # presentation subsystem is windows only (unfortunately)
+    RC_ICONS = res/fishy.ico
 
     #FIXME: poppler-qt5.pc is incomplete in MXE, need to work around that
     PKGCONFIG += poppler-qt5 lcms2 freetype2
