@@ -40,7 +40,7 @@
         <x>0</x>
         <y>0</y>
         <width>387</width>
-        <height>346</height>
+        <height>353</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout">
@@ -65,7 +65,7 @@
           <string notr="true">background-color: white;</string>
          </property>
          <property name="text">
-          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:20pt; font-weight:600;&quot;&gt;&amp;lt;&amp;gt;&amp;lt; Recorder&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;v0.2 ALPHA&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Copyright (C) 2014-2015 &lt;a href=&quot;mailto:rgcjonas@gmail.com&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Jonas Kümmerlin&lt;br/&gt;&lt;/span&gt;&lt;/a&gt;License: GPLv3&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Used software libraries:&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;http://lame.sourceforge.net&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;LAME&lt;/span&gt;&lt;/a&gt; __LAME_VERSION__&lt;br/&gt;&lt;a href=&quot;http://qtproject.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Qt&lt;/span&gt;&lt;/a&gt; __QT_VERSION__&lt;br/&gt;&lt;a href=&quot;http://portaudio.com/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;PortAudio&lt;/span&gt;&lt;/a&gt; __PORTAUDIO_VERSION__&lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;This version is not suitable for public release yet.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-size:20pt; font-weight:600;&quot;&gt;&amp;lt;&amp;gt;&amp;lt; Recorder&lt;/span&gt;&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;v0.2 ALPHA&lt;/span&gt;&lt;/p&gt;&lt;p&gt;Copyright (C) 2014-2015 &lt;a href=&quot;mailto:rgcjonas@gmail.com&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Jonas Kümmerlin&lt;br/&gt;&lt;/span&gt;&lt;/a&gt;License: GPLv3&lt;br/&gt;&lt;/p&gt;&lt;p&gt;Used software libraries:&lt;/p&gt;&lt;p&gt;&lt;a href=&quot;http://lame.sourceforge.net&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;LAME&lt;/span&gt;&lt;/a&gt; __LAME_VERSION__&lt;br/&gt;&lt;a href=&quot;http://qtproject.org/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Qt&lt;/span&gt;&lt;/a&gt; __QT_VERSION__&lt;br/&gt;&lt;a href=&quot;http://portaudio.com/&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;PortAudio&lt;/span&gt;&lt;/a&gt; __PORTAUDIO_VERSION__&lt;br/&gt;&lt;a href=&quot;https://projects.kde.org/projects/kde/workspace/breeze&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Breeze Icon Theme&lt;/span&gt;&lt;/a&gt; 5.4 &lt;/p&gt;&lt;p&gt;&lt;br/&gt;&lt;/p&gt;&lt;p&gt;This version is not suitable for public release yet.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="margin">
           <number>9</number>

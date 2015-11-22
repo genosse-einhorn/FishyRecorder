@@ -13,6 +13,7 @@ class PresentationTab;
 
 class WelcomePane;
 class PdfPresenter;
+class ScreenViewControl;
 
 class PresentationTab : public QWidget
 {
@@ -46,6 +47,7 @@ private slots:
     void openPdf();
     void openPpt();
     void slotNoSlides() { canNextSlideChanged(false); canPrevSlideChanged(false); }
+    void tabChanged();
 
 private:
     Ui::PresentationTab *ui;
@@ -55,6 +57,10 @@ private:
     bool     m_whileSettingOverlay = false;
 
     QRect m_currentScreen { 0, 0, 0, 0 };
+
+#ifdef Q_OS_WIN32
+    ScreenViewControl *m_screenView = nullptr;
+#endif
 
     Presentation::PdfPresenter *doPresentPdf(const QString &filename);
 };

@@ -87,7 +87,7 @@ void ConfigPane::init()
     QObject::connect(t, &QTimer::timeout, this, &ConfigPane::updateAvailableSpace);
     t->start();
 
-#ifdef Q_OS_WIN32
+    ui->screenCombo->addItem(tr("< No Screen >"), QRect(0, 0, 0, 0));
     for (QScreen* screen : QGuiApplication::screens()) {
         ui->screenCombo->addItem(
                     QString("%1 [%2x%3 at %4,%5]")
@@ -118,9 +118,6 @@ void ConfigPane::init()
     QObject::connect((QGuiApplication*)QGuiApplication::instance(), &QGuiApplication::screenRemoved, this, &ConfigPane::screenRemoved);
 
     screenComboChanged(ui->screenCombo->currentIndex());
-#else
-    ui->screenCombo->setEnabled(false);
-#endif
 }
 
 void ConfigPane::displayDeviceError(Error::Provider::ErrorType type, const QString &str1, const QString &str2)

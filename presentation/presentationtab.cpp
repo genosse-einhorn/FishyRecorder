@@ -13,11 +13,12 @@
 #include <QDesktopWidget>
 #include <QAbstractNativeEventFilter>
 #include <QAbstractEventDispatcher>
-#include <QtWinExtras>
 
-#include <QAxObject>
-
-#include <windows.h>
+#ifdef Q_OS_WIN32
+# include <QtWinExtras>
+# include <QAxObject>
+# include <windows.h>
+#endif
 
 namespace Presentation {
 
@@ -29,20 +30,22 @@ PresentationTab::PresentationTab(QWidget *parent) :
     ui->setupUi(this);
 
     m_welcome = new WelcomePane(this);
-    ui->sidebar->insertWidget(0, m_welcome);
+    ui->controlStack->insertWidget(0, m_welcome);
 
     QObject::connect(m_welcome, &WelcomePane::pdfRequested, this, &PresentationTab::openPdf);
     QObject::connect(m_welcome, &WelcomePane::pptRequested, this, &PresentationTab::openPpt);
+
+    QObject::connect(ui->presentationTabWidget, &QTabWidget::currentChanged, this, &PresentationTab::tabChanged);
 
     m_overlayWindow->setWindowFlags(Qt::Window | Qt::Tool | Qt::FramelessWindowHint);
     m_overlayWindow->setAttribute(Qt::WA_ShowWithoutActivating);
     m_overlayWindow->setStyleSheet("background-color: black");
     m_overlayWindow->setAutoFillBackground(true);
     m_overlayWindow->setCursor(Qt::BlankCursor);
-    QtWin::setWindowExcludedFromPeek(m_overlayWindow, true);
 
-    //FIXME: doesn't really seem to work, have to call again
-    ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
+#ifdef Q_OS_WIN32
+    QtWin::setWindowExcludedFromPeek(m_overlayWindow, true);
+#endif
 }
 
 PresentationTab::~PresentationTab()
@@ -52,13 +55,18 @@ PresentationTab::~PresentationTab()
 
 void PresentationTab::screenUpdated(const QRect &screen)
 {
-    ui->screenView->screenUpdated(screen);
+#ifdef Q_OS_WIN32
+    if (m_screenView)
+        m_screenView->screenUpdated(screen);
+#endif
 
     // reposition the blank window
     m_overlayWindow->setGeometry(screen.x(), screen.y(), screen.width(), screen.height());
 
+#ifdef Q_OS_WIN32
     HWND hwnd = (HWND)m_overlayWindow->winId();
     ::SetWindowPos(hwnd, HWND_TOPMOST, screen.x(), screen.y(), screen.width(), screen.height(), SWP_NOACTIVATE);
+#endif
 
     emit sigScreenChange(screen);
 
@@ -76,9 +84,6 @@ void PresentationTab::blank(bool blank)
     p.fill(Qt::black);
     m_overlayWindow->setPixmap(p);
     m_overlayWindow->show();
-
-    // ensure exclusion
-    ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
 
     emit freezeChanged(false);
     emit blankChanged(true);
@@ -98,9 +103,6 @@ void PresentationTab::freeze(bool freeze)
                                                    m_currentScreen.height()));
     m_overlayWindow->show();
 
-    // ensure exclusion
-    ui->screenView->setExcludedWindow((HWND)m_overlayWindow->winId());
-
     emit blankChanged(false);
     emit freezeChanged(true);
 }
@@ -118,12 +120,6 @@ void PresentationTab::clear()
 
 PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
 {
-    if (m_currentScreen.width() < 1) {
-        QMessageBox::critical(this, tr("No presentation screen"), tr("Select a screen to present on, first"));
-
-        return nullptr;
-    }
-
     PdfPresenter *presenter = PdfPresenter::loadPdfFile(filename);
 
 
@@ -133,8 +129,8 @@ PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
         return nullptr;
     }
 
-    int index = ui->sidebar->insertWidget(-1, presenter);
-    ui->sidebar->setCurrentIndex(index);
+    int index = ui->controlStack->insertWidget(-1, presenter);
+    ui->controlStack->setCurrentIndex(index);
 
     QObject::connect(presenter, &PdfPresenter::closeRequested, presenter, &QObject::deleteLater);
     QObject::connect(presenter, &PdfPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
@@ -169,6 +165,7 @@ void PresentationTab::openPdf()
 
 void PresentationTab::openPpt()
 {
+#ifdef Q_OS_WIN32
     QString filename = QFileDialog::getOpenFileName(this, tr("Open PPT"),
                                                     QString(),
                                                     tr("PowerPoint Presentations (*.ppt *.pptx)"));
@@ -211,6 +208,22 @@ void PresentationTab::openPpt()
 error:
     QMessageBox::critical(this, tr("Could not launch PPT"), tr("The PPT file could not be loaded."));
     delete pdfdir;
+#endif /* Q_OS_WIN32 */
+}
+
+void PresentationTab::tabChanged()
+{
+#ifdef Q_OS_WIN32
+    if (ui->presentationTabWidget->currentWidget() == ui->controlTab) {
+        delete m_screenView;
+        m_screenView = nullptr;
+    } else if (!m_screenView) {
+        m_screenView = new ScreenViewControl();
+        int index = ui->screenViewStack->insertWidget(-1, m_screenView);
+        ui->screenViewStack->setCurrentIndex(index);
+        m_screenView->screenUpdated(m_currentScreen);
+    }
+#endif
 }
 
 } // namespace Presentation

@@ -66,7 +66,8 @@ ScreenViewRenderer::ScreenViewRenderer(HWND window, const QRect &screen, QObject
 
 ScreenViewRenderer::~ScreenViewRenderer()
 {
-    m_context->ClearState();
+    if (m_context)
+        m_context->ClearState();
 }
 
 bool ScreenViewRenderer::updateScreen(const QRect &screen)
@@ -86,6 +87,9 @@ bool ScreenViewRenderer::reset()
     m_duplication.reset();
     m_duplDesktopImage.reset();
     m_frameAcquired = false;
+
+    if (!m_device)
+        return false;
 
     // find the matching output
     com::ptr<IDXGIDevice>  dev;

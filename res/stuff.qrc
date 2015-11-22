@@ -3,8 +3,10 @@
         <file alias="error.svg">dialog-error-symbolic.svg</file>
         <file alias="info.svg">dialog-information-symbolic.svg</file>
         <file alias="warning.svg">dialog-warning-symbolic.svg</file>
-        <file>pdf.png</file>
-        <file>ppt.png</file>
+        <file>application-pdf.svg</file>
+        <file>x-office-presentation.svg</file>
+        <file>image-x-generic.svg</file>
+        <file>video-x-wmv.svg</file>
     </qresource>
     <qresource prefix="/">
         <file>DejaVuSans.ttf</file>

@@ -26,7 +26,9 @@ signals:
 
 public slots:
     void screenUpdated(const QRect& rect);
+#ifdef Q_OS_WIN32
     void setExcludedWindow(HWND win);
+#endif
 
 private:
     QThread *m_thread = nullptr;

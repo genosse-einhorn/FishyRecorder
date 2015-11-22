@@ -9,11 +9,14 @@
 #include <QPixmap>
 #include <QFutureWatcher>
 #include <QtConcurrent/QtConcurrent>
-#include <QtWinExtras>
-#include <windows.h>
 #include <cmath>
 #include <memory>
 #include <vector>
+
+#ifdef Q_OS_WIN32
+# include <QtWinExtras>
+# include <windows.h>
+#endif
 
 namespace {
     const int ICON_SIZE = 200;
@@ -78,7 +81,8 @@ void PdfPresenter::kickoffPreviewList()
     ui->slideList->setIconSize(QSize(ICON_SIZE, ICON_SIZE));
     ui->slideList->setFlow(QListView::TopToBottom);
     ui->slideList->setWrapping(false);
-    ui->slideList->setMaximumWidth(ICON_SIZE + 50);
+    ui->slideList->setMaximumWidth(ICON_SIZE + 40);
+    ui->slideList->setMinimumWidth(ICON_SIZE + 40);
 
     for (int i = 0; i < m_pdf->numPages(); ++i) {
         QListWidgetItem *item = new QListWidgetItem(QString("%1").arg(i+1));
@@ -123,22 +127,25 @@ void PdfPresenter::updatePresentedPage()
     setCanPrevPage(m_currentPageNo > 0);
     setCanNextPage(m_currentPageNo < m_pdf->numPages()-1);
 
-    if (!m_presentationWindow || !m_presentationImageLbl)
-        return;
-
-    Poppler::Page *page = m_pdf->page(m_currentPageNo);
-    if (!page)
-        return;
-
     if (ui->slideList->currentRow() != m_currentPageNo) {
         ui->slideList->setCurrentRow(m_currentPageNo);
         ui->slideList->scrollToItem(ui->slideList->item(m_currentPageNo), QAbstractItemView::PositionAtCenter);
     }
 
-    if (m_thisPage->isFinished())
-        m_presentationImageLbl->setPixmap(m_thisPage->result());
-    else
-        m_presentationImageLbl->setPixmap(QPixmap());
+    Poppler::Page *page = m_pdf->page(m_currentPageNo);
+    if (!page)
+        return;
+
+    // Set presentation window
+    if (m_presentationImageLbl) {
+        if (m_thisPage->isFinished())
+            m_presentationImageLbl->setPixmap(m_thisPage->result());
+        else
+            m_presentationImageLbl->setPixmap(QPixmap());
+    }
+
+    // Set preview window
+    ui->preview->setPage(m_currentPageNo);
 }
 
 PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
@@ -155,8 +162,11 @@ PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
 
     PdfPresenter *presenter = new PdfPresenter();
     presenter->m_pdf.reset(doc);
+    presenter->ui->preview->setDocument(presenter->m_pdf);
 
     presenter->kickoffPreviewList();
+    presenter->resetPresentationPixmaps();
+    presenter->updatePresentedPage();
 
     return presenter;
 }
@@ -172,6 +182,10 @@ PdfPresenter::~PdfPresenter()
 void PdfPresenter::setScreen(const QRect &screen)
 {
     delete m_presentationWindow;
+    m_presentationWindow = m_presentationImageLbl = nullptr;
+
+    if (!screen.width() || !screen.height())
+        return;
 
     m_presentationWindow = new QWidget();
     m_presentationImageLbl = new QLabel();
@@ -185,7 +199,9 @@ void PdfPresenter::setScreen(const QRect &screen)
 
     m_presentationWindow->setLayout(gridLayout);
 
+#ifdef Q_OS_WIN32
     QtWin::setWindowExcludedFromPeek(m_presentationWindow, true);
+#endif
 
     // black background
     QPalette pal(m_presentationWindow->palette());
@@ -196,7 +212,7 @@ void PdfPresenter::setScreen(const QRect &screen)
     m_presentationWindow->show();
 
     // now that we have the window, position it
-    m_presentationWindow->setWindowFlags(m_presentationWindow->windowFlags() | Qt::FramelessWindowHint | Qt::Tool);
+    m_presentationWindow->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
     m_presentationWindow->setWindowState(Qt::WindowFullScreen);
     m_presentationWindow->setGeometry(screen.left(), screen.top(), screen.width(), screen.height());
     m_presentationWindow->setVisible(true);
@@ -214,11 +230,14 @@ void PdfPresenter::nextPage()
         return;
 
     m_currentPageNo += 1;
-    auto *oldPrev = m_prevPage;
-    m_prevPage = m_thisPage;
-    m_thisPage = m_nextPage;
-    m_nextPage = oldPrev;
-    m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
+
+    if (m_presentationWindow) {
+        auto *oldPrev = m_prevPage;
+        m_prevPage = m_thisPage;
+        m_thisPage = m_nextPage;
+        m_nextPage = oldPrev;
+        m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
+    }
 
     updatePresentedPage();
 }
@@ -229,11 +248,14 @@ void PdfPresenter::previousPage()
         return;
 
     m_currentPageNo -= 1;
-    auto *oldNext = m_nextPage;
-    m_nextPage = m_thisPage;
-    m_thisPage = m_prevPage;
-    m_prevPage = oldNext;
-    m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
+
+    if (m_presentationWindow) {
+        auto *oldNext = m_nextPage;
+        m_nextPage = m_thisPage;
+        m_thisPage = m_prevPage;
+        m_prevPage = oldNext;
+        m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
+    }
 
     updatePresentedPage();
 }
@@ -241,9 +263,11 @@ void PdfPresenter::previousPage()
 
 void PdfPresenter::resetPresentationPixmaps()
 {
-    m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
-    m_thisPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo  , presentationWidth(), presentationHeight()));
-    m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
+    if (m_presentationWindow) {
+        m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
+        m_thisPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo  , presentationWidth(), presentationHeight()));
+        m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
+    }
 }
 
 void PdfPresenter::closeBtnClicked()

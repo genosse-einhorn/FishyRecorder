@@ -11,10 +11,7 @@
 #include "main/configpane.h"
 #include "main/quitdialog.h"
 #include "main/aboutpane.h"
-
-#ifdef Q_OS_WIN32
-#   include "presentation/presentationtab.h"
-#endif
+#include "presentation/presentationtab.h"
 
 #include <QDebug>
 #include <QFile>
@@ -95,7 +92,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->tabWidget->addTab(m_configPane, tr("Configuration"));
     ui->tabWidget->addTab(m_trackPane, tr("Recording"));
 
-#ifdef Q_OS_WIN32
     m_presentation = new Presentation::PresentationTab(this);
 
     QObject::connect(m_configPane, &ConfigPane::presentationScreenChanged, m_presentation, &Presentation::PresentationTab::screenUpdated);
@@ -115,13 +111,11 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->blankBtn->setEnabled(true);
 
     ui->tabWidget->addTab(m_presentation, tr("Presentation"));
-#endif
 
 #ifndef QT_NO_DEBUG
     ui->tabWidget->addTab(new Error::SimulationWidget(this), "Debug");
 #endif
     ui->tabWidget->addTab(new AboutPane(this), tr("About"));
-
 
     // == Main styling ==
     QPalette pal = this->palette();
@@ -138,29 +132,30 @@ MainWindow::MainWindow(QWidget *parent) :
     for (int i = 0; i < ui->tabWidget->count(); ++i) {
         QWidget *w = ui->tabWidget->widget(i);
         w->setAutoFillBackground(true);
-        w->setPalette(QGuiApplication::palette());
+        w->setPalette(w->palette());
         w->setBackgroundRole(QPalette::Base);
     }
+
     ui->tabWidget->setStyleSheet(QString(
-        "QTabBar::tab {"
+        "#tabWidget > QTabBar::tab {"
         "   background-color: %1;"
         "   color: %2;"
         "   padding: 10px;"
         "   border: 0;"
         "   margin-left: 5px;"
         "}"
-        "QTabBar::tab:selected {"
+        "#tabWidget > QTabBar::tab:selected {"
         "   background-color: %3;"
         "   color: %4;"
         "   margin-left: 0;"
         "}"
-        "QTabWidget::pane {"
+        "#tabWidget::pane {"
         "  border: 0"
         "}"
     ).arg(this->palette().color(QPalette::Light).name())
      .arg(this->palette().color(QPalette::Foreground).name())
-     .arg(ui->tabWidget->palette().color(QPalette::Base).name())
-     .arg(ui->tabWidget->palette().color(QPalette::Text).name()));
+     .arg(ui->tabWidget->widget(0)->palette().color(ui->tabWidget->widget(0)->backgroundRole()).name())
+     .arg(ui->tabWidget->widget(0)->palette().color(QPalette::Text).name()));
 
     // == bottom button styling ==
     // This can be easily done via style sheets, saving us from subclassing QPushButton

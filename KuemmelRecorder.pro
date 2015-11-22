@@ -5,11 +5,10 @@
 #-------------------------------------------------
 
 QT       += core widgets concurrent
-
 CONFIG   += link_pkgconfig c++11
 CONFIG   -= exceptions rtti
 
-PKGCONFIG += portaudio-2.0 sqlite3
+PKGCONFIG += portaudio-2.0 sqlite3 poppler-qt5
 
 TARGET   = KuemmelRecorder
 TEMPLATE = app
@@ -43,7 +42,11 @@ SOURCES += \
     util/boolsignalor.cpp \
     util/portaudio.cpp \
     recording/tracklistmodel.cpp \
-    export/mp3paramsdialog.cpp
+    export/mp3paramsdialog.cpp \
+    presentation/presentationtab.cpp \
+    presentation/welcomepane.cpp \
+    presentation/pdfpresenter.cpp \
+    presentation/pdfpreviewwidget.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -72,7 +75,11 @@ HEADERS += \
     util/boolsignalor.h \
     util/portaudio.h \
     recording/tracklistmodel.h \
-    export/mp3paramsdialog.h
+    export/mp3paramsdialog.h \
+    presentation/presentationtab.h \
+    presentation/welcomepane.h \
+    presentation/pdfpresenter.h \
+    presentation/pdfpreviewwidget.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -82,7 +89,10 @@ FORMS    += \
     main/configpane.ui \
     main/quitdialog.ui \
     main/aboutpane.ui \
-    export/mp3paramsdialog.ui
+    export/mp3paramsdialog.ui \
+    presentation/presentationtab.ui \
+    presentation/welcomepane.ui \
+    presentation/pdfpresenter.ui
 
 TRANSLATIONS = l10n/recorder_de.ts
 
@@ -93,29 +103,19 @@ win32 {
     PKGCONFIG += poppler-qt5 lcms2 freetype2
     QT += xml
 
-    QT += winextras axcontainer
+    QT += winextras axcontainer svg
 
     INCLUDEPATH += external/d3d-headers
 
-    SOURCES +=  \
-        presentation/presentationtab.cpp \
+    SOURCES += \
         presentation/screenviewcontrol.cpp \
-        presentation/welcomepane.cpp \
-        presentation/pdfpresenter.cpp \
         presentation/screenviewrenderer.cpp
     HEADERS += \
-        presentation/presentationtab.h \
         presentation/screenviewcontrol.h \
-        presentation/welcomepane.h \
-        presentation/pdfpresenter.h \
         util/com.h \
         presentation/screenviewrenderer.h \
         presentation/screenviewshaders.h \
         util/win32.h
-    FORMS += \
-        presentation/presentationtab.ui \
-        presentation/welcomepane.ui \
-        presentation/pdfpresenter.ui
 }
 
 CONFIG(debug, debug|release) {
