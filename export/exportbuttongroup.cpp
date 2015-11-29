@@ -80,7 +80,7 @@ void ExportButtonGroup::mp3BtnClicked()
     QString artist = m_database->readConfigString("mp3_export_artist");
 
     // improvise album name
-    QString album  = tr("Recording from %1").arg(m_controller->trackTimestamp(0).toString(Qt::SystemLocaleShortDate));
+    QString album  = tr("Recording from %1").arg(m_controller->trackTimestamp(0).toLocalTime().toString(Qt::SystemLocaleShortDate));
 
     Mp3ParamsDialog paramsDlg(album, artist, this);
     if (paramsDlg.exec() != QDialog::Accepted)
