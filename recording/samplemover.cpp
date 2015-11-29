@@ -32,13 +32,18 @@ Recording::SampleMover::stream_callback(const void *input,
     // well, we don't really care enough for the monitor to handle its status codes
 
     if (input) {
-        int16_t *samples = (int16_t *)input;
+        float *samples = (float *)input;
+
+        // apply volume factor
+        for (unsigned long i = 0; i < 2*frameCount; ++i) {
+            samples[i] = samples[i] * mover->m_volumeFactor;
+        }
 
         // FIXME: should we do the level calculation outside the callback?
         // is the simplified code worth the added latency?
         for (unsigned long i = 0; i < frameCount; ++i) {
-            mover->m_tempLevelL = qMax(mover->m_tempLevelL, qAbs(qFromLittleEndian(samples[2*i + 0])));
-            mover->m_tempLevelR = qMax(mover->m_tempLevelR, qAbs(qFromLittleEndian(samples[2*i + 1])));
+            mover->m_tempLevelL = qMax(mover->m_tempLevelL, qAbs(samples[2*i + 0]));
+            mover->m_tempLevelR = qMax(mover->m_tempLevelR, qAbs(samples[2*i + 1]));
         }
 
         mover->m_tempLevelSampleCount += frameCount;
@@ -53,9 +58,9 @@ Recording::SampleMover::stream_callback(const void *input,
     }
 
     if (output && input && mover->m_monitorEnabled) {
-        memcpy(output, input, frameCount * 4);
+        memcpy(output, input, frameCount * sizeof(float) * 2);
     } else if (output) {
-        memset(output, 0, frameCount * 4);
+        memset(output, 0, frameCount * sizeof(float) * 2);
     }
 
     RecordingState rec = mover->m_recordingFlag;
@@ -104,7 +109,7 @@ Recording::SampleMover::SampleMover(uint64_t samplesAlreadyRecorded, QObject *pa
 {
     Pa_Initialize();
 
-    PaUtil_InitializeRingBuffer(&m_ringbuffer, 4, 1<<18, m_ringbuffer_data);
+    PaUtil_InitializeRingBuffer(&m_ringbuffer, sizeof(float)*2, 1<<18, m_ringbuffer_data);
 
     m_deviceErrorProvider    = new Error::Provider(this);
     m_recordingErrorProvider = new Error::Provider(this);
@@ -124,17 +129,17 @@ void
 Recording::SampleMover::reportState()
 {
     if (m_recordingFlag != RecordingState::STOP_ACCEPTED) {
-        int32_t buffer[1024];
+        float buffer[2048];
         ring_buffer_size_t read;
 
         while ((read = PaUtil_ReadRingBuffer(&m_ringbuffer, buffer, 1024))) {
-            auto written = m_currentFile->write((char *)buffer, (qint64)read*4);
+            auto written = m_currentFile->write((char *)buffer, (qint64)read*sizeof(float)*2);
 
             if (written > 0)
-                m_writtenSampleCount += written/4;
+                m_writtenSampleCount += written/sizeof(float)/2;
 
-            if (written != read*4 || Error::Simulation::SIMULATE("writeAudioFile")) {
-                if (written == read*4)
+            if (written != qint64(read*sizeof(float)*2) || Error::Simulation::SIMULATE("writeAudioFile")) {
+                if (written == qint64(read*sizeof(float)*2))
                     m_recordingErrorProvider->simulate(Error::Provider::ErrorType::Error, "writeAudioFile");
                 else
                     m_recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
@@ -147,7 +152,7 @@ Recording::SampleMover::reportState()
         }
 
         // check if we are in danger of hitting the FAT32 file size limit
-        if (m_writtenSampleCount*4 >= 2000000000 || Error::Simulation::SIMULATE("switchAudioFile")) {
+        if (m_writtenSampleCount*sizeof(float)*2 >= 2000000000 || Error::Simulation::SIMULATE("switchAudioFile")) {
             if (!openRecordingFile())
                 emergencyShutdown();
         }
@@ -183,10 +188,6 @@ Recording::SampleMover::reopenStream()
     const PaDeviceInfo *info;
     PaError err;
 
-    double min_latency = 0;
-    double max_latency = std::numeric_limits<double>::max();
-    Util::PortAudio::latencyBounds(m_inputDevice, m_monitorDevice, &min_latency, &max_latency);
-
     if (m_inputDevice != paNoDevice) {
         info = Pa_GetDeviceInfo(m_inputDevice);
         if (!info) {
@@ -196,9 +197,9 @@ Recording::SampleMover::reopenStream()
 
         input_params.device = m_inputDevice;
         input_params.channelCount = 2;
-        input_params.sampleFormat = paInt16;
+        input_params.sampleFormat = paFloat32;
         input_params.hostApiSpecificStreamInfo = nullptr;
-        input_params.suggestedLatency = qBound(info->defaultLowInputLatency, m_configuredLatency, info->defaultHighInputLatency);
+        input_params.suggestedLatency = qBound(0.0, m_configuredLatency, 1.0);
     }
 
     if (m_monitorDevice != paNoDevice) {
@@ -211,9 +212,9 @@ Recording::SampleMover::reopenStream()
 
         monitor_params.device = m_monitorDevice;
         monitor_params.channelCount = 2;
-        monitor_params.sampleFormat = paInt16;
+        monitor_params.sampleFormat = paFloat32;
         monitor_params.hostApiSpecificStreamInfo = nullptr;
-        monitor_params.suggestedLatency = qBound(info->defaultLowOutputLatency, m_configuredLatency, info->defaultHighOutputLatency);
+        monitor_params.suggestedLatency = qBound(0.0, m_configuredLatency, 1.0);
     }
 
     PaStreamParameters *input_params_ptr   = m_inputDevice   != paNoDevice ? &input_params   : nullptr;
@@ -237,7 +238,7 @@ Recording::SampleMover::reopenStream()
     if (m_monitorDevice != paNoDevice && m_stream && Pa_IsStreamActive(m_stream))
         setCanMonitor(true);
     if (m_stream && Pa_IsStreamActive(m_stream))
-        latencyChanged(min_latency, max_latency, qBound(min_latency, m_configuredLatency, max_latency));
+        latencyChanged(m_configuredLatency);
 }
 
 void Recording::SampleMover::emergencyShutdown()
@@ -252,7 +253,7 @@ void Recording::SampleMover::emergencyShutdown()
                 ; //spin
 
             // drain the ringbuffer
-            int32_t buffer[1024];
+            float buffer[2048];
             ring_buffer_size_t read;
 
             while ((read = PaUtil_ReadRingBuffer(&m_ringbuffer, buffer, 1024)))
@@ -316,7 +317,7 @@ void
 Recording::SampleMover::setInputDevice(PaDeviceIndex device)
 {
     m_inputDevice = device;
-    m_configuredLatency = std::numeric_limits<double>::max();
+    m_configuredLatency = 0.3;
 
     reopenStream();
 }
@@ -325,7 +326,7 @@ void
 Recording::SampleMover::setMonitorDevice(PaDeviceIndex device)
 {
     m_monitorDevice = device;
-    m_configuredLatency = std::numeric_limits<double>::max();
+    m_configuredLatency = 0.3;
 
     reopenStream();
 }
@@ -338,6 +339,13 @@ void Recording::SampleMover::setConfiguredLatency(double latency)
     m_configuredLatency = latency;
 
     reopenStream();
+}
+
+void Recording::SampleMover::setVolumeFactor(float multiplicator)
+{
+    m_volumeFactor = multiplicator;
+
+    volumeFactorChanged(m_volumeFactor);
 }
 
 void
@@ -396,16 +404,16 @@ Recording::SampleMover::stopRecording()
                 ; //spin
 
             // drain the ringbuffer to file
-            int32_t buffer[1024];
+            float buffer[2048];
             ring_buffer_size_t read;
 
             while ((read = PaUtil_ReadRingBuffer(&m_ringbuffer, buffer, 1024))) {
-                auto written = m_currentFile->write((char *)buffer, (qint64)read * 4);
+                auto written = m_currentFile->write((char *)buffer, (qint64)read * sizeof(float)*2);
 
                 if (written > 0)
-                    m_writtenSampleCount += written/4;
+                    m_writtenSampleCount += written/sizeof(float)/2;
 
-                if (written != read * 4) {
+                if (written != qint64(read * sizeof(float)*2)) {
                     m_recordingErrorProvider->setError(Error::Provider::ErrorType::Error,
                                                      tr("Could not write recorded data to file"),
                                                      tr("While writing to `%1': %2").arg(m_currentFile->fileName()).arg(m_currentFile->errorString()));

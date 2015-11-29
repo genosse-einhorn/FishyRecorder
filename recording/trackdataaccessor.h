@@ -78,7 +78,7 @@ public:
      * the track. If samples cannot be read, silence will be inserted and a human-readable
      * error message will be posted via the error provider.
      */
-    uint64_t readData(char *buffer, uint64_t n_samples);
+    uint64_t readData(float *buffer, uint64_t n_samples);
 
     /*!
      * \brief readDataGuaranteed  Fills the given buffer with the given number of samples
@@ -88,7 +88,7 @@ public:
      * In contrast to readData, this function guarantees to fill the buffer with the requested
      * number of samples, even if the end of the track is reached or errors occur.
      */
-    void readDataGuaranteed(char *buffer, uint64_t n_samples);
+    void readDataGuaranteed(float *buffer, uint64_t n_samples);
 
     /*!
      * \brief moveToThread Moves this object to the passed thread

@@ -35,11 +35,13 @@ signals:
     void availableAudioSpaceChanged(uint64_t freeBytes);
     void presentationScreenChanged(const QRect& virtualCoordinates);
     void latencyChanged(double value);
+    void volumeMultiplicatorChanged(float multiplicator);
 
 public slots:
     void displayDeviceError(Error::Provider::ErrorType type, const QString& str1, const QString& str2);
     void recordingStateChanged(bool recording);
-    void handleLatencyChanged(double min, double max, double value);
+    void handleLatencyChanged(double valueInS);
+    void handleVolumeMultiplicatorChanged(float multiplicator);
 
 private slots:
     void recordDevComboChanged(int index);
@@ -51,13 +53,11 @@ private slots:
     void screenAdded(QScreen *screen);
     void screenRemoved(QScreen *screen);
     void latencySliderMoved(int value);
+    void volumeSliderMoved(int value);
 
 private:
     Ui::ConfigPane   *ui;
     Config::Database *m_config;
-
-    double m_minLatency = 0;
-    double m_maxLatency = 100000000;
 };
 
 #endif // CONFIGPANE_H

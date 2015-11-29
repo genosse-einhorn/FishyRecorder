@@ -25,7 +25,7 @@ TrackDataAccessor::TrackDataAccessor(const std::map<uint64_t, QString> &dataFile
     }
 }
 
-uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
+uint64_t TrackDataAccessor::readData(float *buffer, uint64_t nSamples)
 {
     // first, find the file to begin with
     uint64_t currentTotalPos = m_startSample + m_currentPos;
@@ -36,7 +36,7 @@ uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
     if (findOpenAndSeekFileForTrack(currentTotalPos, &file, &samplesInFile)) {
         uint64_t samplesToRead = qMin(nSamples, samplesInFile);
 
-        int64_t bytesRead = file->read(buffer, samplesToRead*4);
+        int64_t bytesRead = file->read((char*)buffer, samplesToRead*sizeof(float)*2);
 
         // The debug code will stay in case we inadvertently break it again
         /*qDebug() << "Reading" << nSamples << "samples at sample position" << currentTotalPos;
@@ -54,8 +54,8 @@ uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
                                      tr("I/O error"),
                                      tr("While reading from `%1': %2").arg(file->fileName()).arg(file->errorString()));
 
-            memset(buffer, 0, samplesToRead*4);
-        } else if ((uint64_t)bytesRead/4 < samplesToRead) {
+            std::fill_n(buffer, samplesToRead*2, 0.0f);
+        } else if ((uint64_t)bytesRead/sizeof(float) < samplesToRead) {
             qDebug() << "Tried to read" << samplesToRead << "samples =" << samplesToRead*4 << "bytes";
             qDebug() << "Got" << bytesRead << "bytes =" << bytesRead/4 << "samples";
 
@@ -63,12 +63,12 @@ uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
                                      tr("I/O error"),
                                      tr("There is data missing in `%1', or some internal data structure has been corrupted.").arg(file->fileName()));
 
-            memset(buffer + (bytesRead/4)*4, 0, (samplesToRead - bytesRead/4)*4);
+            std::fill_n(buffer + (bytesRead/sizeof(float)), 2*samplesToRead - bytesRead/sizeof(float), 0.0f);
         }
     } else {
         uint64_t samplesToFill = qMin(nSamples, samplesInFile);
 
-        memset(buffer, 0, samplesToFill*4);
+        std::fill_n(buffer, samplesToFill*2, 0.0f);
     }
 
     uint64_t samples_filled = qMin(samplesInFile, nSamples);
@@ -76,20 +76,20 @@ uint64_t TrackDataAccessor::readData(char *buffer, uint64_t nSamples)
     return samples_filled;
 }
 
-void TrackDataAccessor::readDataGuaranteed(char *buffer, uint64_t n_samples)
+void TrackDataAccessor::readDataGuaranteed(float *buffer, uint64_t n_samples)
 {
     while (n_samples > 0) {
         uint64_t samplesRead = readData(buffer, n_samples);
 
         n_samples -= samplesRead;
-        buffer    += samplesRead*4;
+        buffer    += samplesRead*2;
 
         if (samplesRead == 0) //eof
             break;
     }
 
     if (n_samples) {
-        memset(buffer, 0, n_samples*4);
+        std::fill_n(buffer, n_samples*2, 0.0f);
     }
 }
 
@@ -141,7 +141,7 @@ bool TrackDataAccessor::findOpenAndSeekFileForTrack(uint64_t currentPos, QFile *
         }
     }
 
-    if (!fileBefore->seek(((qint64)(currentPos - fileBeforePos))*4)) {
+    if (!fileBefore->seek(((qint64)(currentPos - fileBeforePos))*sizeof(float)*2)) {
         m_errorProvider.setError(Error::Provider::ErrorType::Error,
                                  tr("I/O error"),
                                  tr("Could not seek to sample %1 in file `%2': %3").arg(currentPos - fileBeforePos)

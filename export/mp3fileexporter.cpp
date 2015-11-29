@@ -88,11 +88,11 @@ bool Export::Mp3FileExporter::beginTrack(QIODevice *output, uint64_t trackLength
     return true;
 }
 
-bool Export::Mp3FileExporter::encodeData(const char *buffer, uint64_t numSamples)
+bool Export::Mp3FileExporter::encodeData(const float *buffer, uint64_t numSamples)
 {
     unsigned char outBuffer[(numSamples/44100 + 1)*lame_get_brate(m_lame_gbf) + 7200];
 
-    int bytesEncoded = lame_encode_buffer_interleaved(m_lame_gbf, (short*)buffer, (int)numSamples, outBuffer, sizeof(outBuffer));
+    int bytesEncoded = lame_encode_buffer_interleaved_ieee_float(m_lame_gbf, buffer, (int)numSamples, outBuffer, sizeof(outBuffer));
 
     if (bytesEncoded < 0) {
         m_errorProvider->setError(Error::Provider::ErrorType::Error,

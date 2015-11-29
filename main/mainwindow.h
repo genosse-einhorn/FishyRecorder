@@ -34,7 +34,7 @@ public:
     ~MainWindow();
 
 private slots:
-    void levelMeterUpdate(int16_t left, int16_t right);
+    void levelMeterUpdate(float left, float right);
     void timeUpdate(uint64_t samples);
     void availableSpaceUpdate(uint64_t space);
     void trackTimeUpdate(uint64_t samples);

@@ -3,8 +3,15 @@
 #include <QPainter>
 
 FancyProgressBar::FancyProgressBar(QWidget *parent) :
-    QProgressBar(parent)
+    QWidget(parent)
 {
+}
+
+void FancyProgressBar::setValue(float value)
+{
+    m_value = value;
+
+    update();
 }
 
 
@@ -20,10 +27,14 @@ QSize FancyProgressBar::minimumSizeHint() const
 
 void FancyProgressBar::paintEvent(QPaintEvent *)
 {
-    int boxWidth = (int)((double)width() * (value()-minimum())/(maximum()-minimum()));
+    int boxWidth = (int)(width() * std::pow(m_value, 1.0f/3.0f));
 
     QPainter painter(this);
 
-    painter.fillRect(0, 0, width(), height(), palette().brush(palette().currentColorGroup(), QPalette::Light));
-    painter.fillRect(0, 0, boxWidth, height(), palette().brush(palette().currentColorGroup(), QPalette::Foreground));
+    if (boxWidth > width()) {
+        painter.fillRect(0, 0, width(), height(), palette().brush(palette().currentColorGroup(), QPalette::Highlight));
+    } else {
+        painter.fillRect(0, 0, width(), height(), palette().brush(palette().currentColorGroup(), QPalette::Light));
+        painter.fillRect(0, 0, boxWidth, height(), palette().brush(palette().currentColorGroup(), QPalette::Foreground));
+    }
 }

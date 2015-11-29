@@ -3,7 +3,7 @@
 
 #include <QProgressBar>
 
-class FancyProgressBar : public QProgressBar
+class FancyProgressBar : public QWidget
 {
     Q_OBJECT
 public:
@@ -12,6 +12,7 @@ public:
 signals:
 
 public slots:
+    void setValue(float value);
 
 
     // QWidget interface
@@ -21,6 +22,9 @@ public:
 
 protected:
     virtual void paintEvent(QPaintEvent *);
+
+private:
+    float m_value = 0.0f;
 };
 
 #endif // FANCYPROGRESSBAR_H

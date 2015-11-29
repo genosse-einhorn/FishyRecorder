@@ -46,18 +46,20 @@ signals:
      */
     void recordingError(ErrorType severity, const QString& message1, const QString& message2);
 
-    void levelMeterUpdate(int16_t left, int16_t right);
+    void levelMeterUpdate(float left, float right);
     void timeUpdate(uint64_t recordedSamples);
     void recordingStateChanged(bool recording, uint64_t totalRecordedSampleCount);
     void newRecordingFile(const QString& filePath, uint64_t startingFromSampleCount);
     void canRecordChanged(bool canRecord);
     void canMonitorChanged(bool canMonitor);
-    void latencyChanged(double min, double max, double value);
+    void latencyChanged(double value);
+    void volumeFactorChanged(float value);
 
 public slots:
     void setInputDevice(PaDeviceIndex device = paNoDevice);
     void setMonitorDevice(PaDeviceIndex device = paNoDevice);
     void setConfiguredLatency(double latency);
+    void setVolumeFactor(float multiplicator);
     void startRecording();
     void stopRecording();
     void setRecordingState(bool);
@@ -105,20 +107,24 @@ private:
     // This isn't really correct, but it makes life easier for users
     double m_configuredLatency = 1000000000000;
 
+    // The factor to multiply the recorded samples with
+    //NOTE: The correlation of human perception of loudness and audio amplitude is not linear.
+    std::atomic<float> m_volumeFactor { 1.0f };
+
     // The ringbuffer is conveniently lock-free
     PaUtilRingBuffer m_ringbuffer;
     char             m_ringbuffer_data[2<<20]; // roughly 5 seconds of data
 
     // These are std::atomic so both the portaudio callback.
     // And regular class members can safely access them.
-    std::atomic<int16_t> m_level_l { 0 }; // = 0 is not well liked at all :(
-    std::atomic<int16_t> m_level_r { 0 };
+    std::atomic<float> m_level_l { 0 }; // = 0 is not well liked at all :(
+    std::atomic<float> m_level_r { 0 };
 
     // The temporary level calculations are only done by the callback
     // and not supposed to be expected or interfered with by the
     // other running code
-    int16_t m_tempLevelL = 0;
-    int16_t m_tempLevelR = 0;
+    float m_tempLevelL = 0;
+    float m_tempLevelR = 0;
     uint64_t m_tempLevelSampleCount = 0; // reset the level meter after 2000 samples == 22fps
 
     // According to my calculations, we could record

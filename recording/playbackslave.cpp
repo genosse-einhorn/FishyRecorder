@@ -18,8 +18,8 @@ namespace {
 
         auto samplesToBeWritten = PaUtil_GetRingBufferWriteRegions(buffer, std::numeric_limits<ring_buffer_size_t>::max(), &data_1, &size_1, &data_2, &size_2);
 
-        accessor->readDataGuaranteed((char *)data_1, size_1);
-        accessor->readDataGuaranteed((char *)data_2, size_2);
+        accessor->readDataGuaranteed((float *)data_1, size_1);
+        accessor->readDataGuaranteed((float *)data_2, size_2);
 
         PaUtil_AdvanceRingBufferWriteIndex(buffer, samplesToBeWritten);
     }
@@ -32,7 +32,7 @@ PlaybackSlave::PlaybackSlave(QObject *parent) :
 {
     Pa_Initialize();
 
-    PaUtil_InitializeRingBuffer(&m_ringbuffer, 4, sizeof(m_ringbuffer_data)/4, m_ringbuffer_data);
+    PaUtil_InitializeRingBuffer(&m_ringbuffer, sizeof(float)*2, sizeof(m_ringbuffer_data)/sizeof(float)/2, m_ringbuffer_data);
 
     m_errorProvider = new Error::Provider(this);
 
@@ -117,13 +117,7 @@ void PlaybackSlave::setPlaybackState(bool playing, bool fireChangeEvent)
             return;
         }
 
-        // fill the ringbuffer
-        PaUtil_FlushRingBuffer(&m_ringbuffer);
-        m_accessor->seek(m_position);
-
-        fillRingBuffer(m_accessor, &m_ringbuffer);
-
-        // get the stream running
+        // create the stream
         PaStreamParameters monitor_params;
         const PaDeviceInfo *info;
         PaError err;
@@ -142,7 +136,7 @@ void PlaybackSlave::setPlaybackState(bool playing, bool fireChangeEvent)
 
         monitor_params.device = m_monitorDevice;
         monitor_params.channelCount = 2;
-        monitor_params.sampleFormat = paInt16;
+        monitor_params.sampleFormat = paFloat32;
         monitor_params.hostApiSpecificStreamInfo = nullptr;
         monitor_params.suggestedLatency = info->defaultHighOutputLatency;
 
@@ -153,10 +147,19 @@ void PlaybackSlave::setPlaybackState(bool playing, bool fireChangeEvent)
         } else if (err != paNoError) {
             m_errorProvider->setError(Error::Provider::ErrorType::Error, tr("Could not open device(s)"), Pa_GetErrorText(err));
         } else {
-            Pa_StartStream(m_stream);
             m_errorProvider->clearError();
             m_playbackState = true;
         }
+
+        // fill the ringbuffer
+        PaUtil_FlushRingBuffer(&m_ringbuffer);
+        m_accessor->seek(m_position);
+
+        fillRingBuffer(m_accessor, &m_ringbuffer);
+
+        // now start the stream
+        if (m_playbackState)
+            Pa_StartStream(m_stream);
 
         emit playbackStateChanged(m_playbackState);
     } else {
@@ -230,7 +233,7 @@ int PlaybackSlave::stream_callback(const void *input,
     if ((unsigned long)samplesPlayed != frameCount && slave->m_position < slave->m_trackLength) {
         auto difference = frameCount - samplesPlayed;
 
-        memset((char *)output + samplesPlayed*4, 0, difference*4);
+        std::fill_n((float*)output + samplesPlayed, difference, 0.0f);
 
         if (slave->m_position < slave->m_trackLength) {
             qWarning() << "FIXME: Not enough samples in buffer. Should we abort? Ignore? Retry?";

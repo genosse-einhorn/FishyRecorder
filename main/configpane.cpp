@@ -22,8 +22,11 @@ ConfigPane::ConfigPane(Config::Database *db, QWidget *parent) :
     ui->setupUi(this);
 
     // setup the latency field
-    ui->latencySlider->setMinimum(0);
-    ui->latencySlider->setMaximum(std::numeric_limits<int>::max());
+    ui->latencySlider->setMinimum(5000); // in us
+    ui->latencySlider->setMaximum(500000);
+    ui->latencySlider->setValue(ui->latencySlider->maximum());
+    ui->volumeSlider->setValue(1000000000);
+    ui->volumeSlider->setTickPosition(QSlider::TicksBelow);
 }
 
 ConfigPane::~ConfigPane()
@@ -53,30 +56,21 @@ void ConfigPane::init()
     QObject::connect(ui->dataLocationBtn, &QAbstractButton::clicked, this, &ConfigPane::audioDataBtnClicked);
     QObject::connect(ui->dataLocationField, &QLineEdit::textChanged, this, &ConfigPane::audioDataFieldChanged);
     QObject::connect(ui->latencySlider, &QAbstractSlider::valueChanged, this, &ConfigPane::latencySliderMoved);
+    QObject::connect(ui->volumeSlider, &QAbstractSlider::valueChanged, this, &ConfigPane::volumeSliderMoved);
 
     QString lastInputDevice = m_config->readConfigString("input_device");
     QString lastMonitorDevice = m_config->readConfigString("monitor_device");
-    double lastMinLatency = m_config->readConfigDouble("last_observed_min_latency");
-    double lastMaxLatency = m_config->readConfigDouble("last_observed_max_latency");
-    double latency = m_config->readConfigDouble("configured_latency");
+    double latency = m_config->readConfigDouble("configured_latency", 1.0);
+    double multiplicator = m_config->readConfigDouble("volume_multiplicator", 1.0);
 
     if (lastInputDevice.size())
         ui->recordDevCombo->setCurrentText(lastInputDevice);
     if (lastMonitorDevice.size())
         ui->monitorDevCombo->setCurrentText(lastMonitorDevice);
 
-    double minLatency;
-    double maxLatency;
-
-    PaDeviceIndex input_device   = ui->recordDevCombo->currentData().toInt();
-    PaDeviceIndex monitor_device = ui->monitorDevCombo->currentData().toInt();
-
-    if (Util::PortAudio::latencyBounds(input_device, monitor_device, &minLatency, &maxLatency)
-        && minLatency == lastMinLatency && maxLatency == lastMaxLatency) {
-
-        qDebug() << "Restoring latency: " << latency;
-        emit latencyChanged(qBound(minLatency, latency, maxLatency));
-    }
+    qDebug() << "Restoring latency=" << latency << " volume=" << multiplicator;
+    emit latencyChanged(qBound(ui->latencySlider->minimum() * 0.000001, latency, ui->latencySlider->maximum() * 0.000001));
+    emit volumeMultiplicatorChanged(float(multiplicator));
 
     QString lastAudioDir = m_config->readConfigString("audio_data_dir", QStandardPaths::writableLocation(QStandardPaths::TempLocation));
     ui->dataLocationField->setText(lastAudioDir);
@@ -130,25 +124,31 @@ void ConfigPane::recordingStateChanged(bool recording)
     ui->audioDeviceGrp->setEnabled(!recording);
 }
 
-void ConfigPane::handleLatencyChanged(double min, double max, double value)
+void ConfigPane::handleLatencyChanged(double valueInS)
 {
-    int slidermin = ui->latencySlider->minimum();
-    int slidermax = ui->latencySlider->maximum();
+    int valueInUs = valueInS * 1000000;
 
-    m_maxLatency = max;
-    m_minLatency = min;
+    m_config->writeConfigDouble("configured_latency", valueInS);
 
-    m_config->writeConfigDouble("last_observed_min_latency", min);
-    m_config->writeConfigDouble("last_observed_max_latency", max);
-    m_config->writeConfigDouble("configured_latency", value);
-
-    qDebug() << "Saving latency=" << value << " last min=" << min << " max=" << max;
-
-    int sliderval = slidermin + static_cast<int>((value - min)/(max - min)*(double)(slidermax - slidermin));
+    qDebug() << "Saving latency=" << valueInS;
 
     {
         Util::SignalBlocker blocker(ui->latencySlider);
-        ui->latencySlider->setValue(sliderval);
+        ui->latencySlider->setValue(valueInUs);
+    }
+}
+
+void ConfigPane::handleVolumeMultiplicatorChanged(float multiplicator)
+{
+    float sliderVal = std::pow(multiplicator, 1.0f/3.0f);
+
+    m_config->writeConfigDouble("volume_multiplicator", multiplicator);
+
+    qDebug() << "Saving volume " << multiplicator << "";
+
+    {
+        Util::SignalBlocker blocker(ui->volumeSlider);
+        ui->volumeSlider->setValue(sliderVal * 1000000000);
     }
 }
 
@@ -227,9 +227,14 @@ void ConfigPane::screenRemoved(QScreen *screen)
 
 void ConfigPane::latencySliderMoved(int value)
 {
-    int slidermin = ui->latencySlider->minimum();
-    int slidermax = ui->latencySlider->maximum();
-    double latency = m_minLatency + static_cast<double>(value - slidermin)/static_cast<double>(slidermax - slidermin)*(m_maxLatency - m_minLatency);
+    double latency = value * 0.000001;
 
     emit latencyChanged(latency);
+}
+
+void ConfigPane::volumeSliderMoved(int value)
+{
+    float multiplicator = std::pow(value/1000000000.0f, 3);
+
+    volumeMultiplicatorChanged(multiplicator);
 }

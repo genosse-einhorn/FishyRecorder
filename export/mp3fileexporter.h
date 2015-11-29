@@ -19,7 +19,7 @@ public:
 protected:
     virtual QString fileExtension() const override;
     virtual bool beginTrack(QIODevice *output, uint64_t trackLength, const QString& trackName, int trackIndex) override;
-    virtual bool encodeData(const char *buffer, uint64_t numSamples) override;
+    virtual bool encodeData(const float *buffer, uint64_t numSamples) override;
     virtual bool finishTrack() override;
 
 private:

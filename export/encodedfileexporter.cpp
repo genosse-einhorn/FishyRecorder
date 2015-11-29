@@ -26,7 +26,7 @@ static const unsigned int BUFFER_SIZE = 10240;
 void EncodedFileExporter::run(Recording::TrackDataAccessor *accessor, QIODevice *outputFile)
 {
     // go through the raw samples
-    char buffer[BUFFER_SIZE];
+    float buffer[BUFFER_SIZE];
     uint64_t samples_processed = 0;
 
     // tell the slave to begin working
@@ -43,7 +43,7 @@ void EncodedFileExporter::run(Recording::TrackDataAccessor *accessor, QIODevice 
         if (m_aborted)
             break;
 
-        uint64_t samples_this_time = accessor->readData(buffer, BUFFER_SIZE/4);
+        uint64_t samples_this_time = accessor->readData(buffer, BUFFER_SIZE/2);
         samples_processed += samples_this_time;
 
         // safety measure, should not be necessary

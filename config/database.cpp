@@ -670,7 +670,7 @@ void Database::repairLengthOfLastTrack()
 
                 int64_t fileOffset = start - fileStart;
 
-                int64_t fileSize = QFileInfo(fileName).size() / 4; // in samples
+                int64_t fileSize = QFileInfo(fileName).size() / sizeof(float) / 2; // in samples
 
                 if (fileSize != 0 && fileSize > fileOffset) {
                     qDebug() << "Successfully repaired length of last track, now" << fileSize - fileOffset << "samples";

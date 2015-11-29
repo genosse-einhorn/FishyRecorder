@@ -72,7 +72,7 @@ protected:
      * encodeData() nor finishTrack() will be called anymore, and the callee is responsible for cleaning up
      * internal data structures. The IO device will be closed by the caller.
      */
-    virtual bool encodeData(const char *buffer, uint64_t numSamples) = 0;
+    virtual bool encodeData(const float *buffer, uint64_t numSamples) = 0;
 
     /*!
      * \brief finishTrack   Finished the encoding process

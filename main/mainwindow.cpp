@@ -55,6 +55,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_configPane, &ConfigPane::availableAudioSpaceChanged, this, &MainWindow::availableSpaceUpdate);
     QObject::connect(m_configPane, &ConfigPane::audioDataDirChanged, m_mover, &Recording::SampleMover::setAudioDataDir);
     QObject::connect(m_configPane, &ConfigPane::latencyChanged, m_mover, &Recording::SampleMover::setConfiguredLatency);
+    QObject::connect(m_configPane, &ConfigPane::volumeMultiplicatorChanged, m_mover, &Recording::SampleMover::setVolumeFactor);
 
     QObject::connect(m_mover, &Recording::SampleMover::timeUpdate, this, &MainWindow::timeUpdate);
     QObject::connect(m_mover, &Recording::SampleMover::levelMeterUpdate, this, &MainWindow::levelMeterUpdate);
@@ -69,6 +70,7 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(m_mover, &Recording::SampleMover::timeUpdate, m_trackController, &Recording::TrackController::onTimeUpdate);
     QObject::connect(m_mover, &Recording::SampleMover::canRecordChanged, ui->recordBtn, &QAbstractButton::setEnabled);
     QObject::connect(m_mover, &Recording::SampleMover::latencyChanged, m_configPane, &ConfigPane::handleLatencyChanged);
+    QObject::connect(m_mover, &Recording::SampleMover::volumeFactorChanged, m_configPane, &ConfigPane::handleVolumeMultiplicatorChanged);
 
     Util::BoolSignalOr *trackAndNextBtnEnabler = new Util::BoolSignalOr(this);
     QObject::connect(m_mover, &Recording::SampleMover::recordingStateChanged, trackAndNextBtnEnabler, &Util::BoolSignalOr::inputA);
@@ -83,11 +85,6 @@ MainWindow::MainWindow(QWidget *parent) :
     QObject::connect(nextSlideDown, &QShortcut::activated, ui->nextBtn, &QAbstractButton::click);
     QShortcut *prevSlideUp = new QShortcut(QKeySequence("Up"), this);
     QObject::connect(prevSlideUp, &QShortcut::activated, ui->prevBtn, &QAbstractButton::click);
-
-    ui->levelL->setMinimum(0);
-    ui->levelL->setMaximum(std::numeric_limits<int16_t>::max());
-    ui->levelR->setMinimum(0);
-    ui->levelR->setMaximum(std::numeric_limits<int16_t>::max());
 
     ui->tabWidget->addTab(m_configPane, tr("Configuration"));
     ui->tabWidget->addTab(m_trackPane, tr("Recording"));
@@ -186,6 +183,12 @@ MainWindow::MainWindow(QWidget *parent) :
      .replace("%2", this->palette().color(QPalette::Foreground).name())
      .replace("%3", this->palette().color(QPalette::Light).name()));
 
+    // VU meter style
+    QPalette vupal = ui->levelL->palette();
+    vupal.setBrush(QPalette::Highlight, QColor(0xFF, 0, 0));
+    ui->levelL->setPalette(vupal);
+    ui->levelR->setPalette(vupal);
+
     m_configPane->init();
 }
 
@@ -197,17 +200,17 @@ MainWindow::~MainWindow()
 }
 
 void
-MainWindow::levelMeterUpdate(int16_t left, int16_t right)
+MainWindow::levelMeterUpdate(float left, float right)
 {
-    ui->levelL->setValue(qBound((int16_t)0, left, std::numeric_limits<int16_t>::max()));
-    ui->levelR->setValue(qBound((int16_t)0, right, std::numeric_limits<int16_t>::max()));
+    ui->levelL->setValue(left);
+    ui->levelR->setValue(right);
 }
 
 void
 MainWindow::timeUpdate(uint64_t samples)
 {
     ui->totalRecTimeLbl->setText(Util::formatTime(samples));
-    ui->diskSpaceLbl->setText(Util::formatTime(m_lastSpaceCheckSpace/4 - (samples - m_lastSpaceCheckTime)));
+    ui->diskSpaceLbl->setText(Util::formatTime(m_lastSpaceCheckSpace/sizeof(float)/2 - (samples - m_lastSpaceCheckTime)));
 }
 
 void MainWindow::availableSpaceUpdate(uint64_t space)
@@ -215,7 +218,7 @@ void MainWindow::availableSpaceUpdate(uint64_t space)
     m_lastSpaceCheckSpace = space;
     m_lastSpaceCheckTime  = m_mover->recordedSampleCount();
 
-    ui->diskSpaceLbl->setText(Util::formatTime(space/4));
+    ui->diskSpaceLbl->setText(Util::formatTime(space/sizeof(float)/2));
 }
 
 void MainWindow::trackTimeUpdate(uint64_t samples)

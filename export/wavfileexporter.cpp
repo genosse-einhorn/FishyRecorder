@@ -92,7 +92,7 @@ bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const 
     }
 }
 
-bool WavFileExporter::encodeData(const char *buffer, uint64_t numSamples)
+bool WavFileExporter::encodeData(const float *buffer, uint64_t numSamples)
 {
     // The debug code will stay in case we inadvertently break it again
     /*qDebug() << "Encoding " << numSamples << "wave samples at pos" << m_samplesWritten;
@@ -105,23 +105,30 @@ bool WavFileExporter::encodeData(const char *buffer, uint64_t numSamples)
 
     m_samplesWritten += numSamples;
 
-    int64_t bytesWritten = m_device->write(buffer, numSamples*4);
+    // write audio data as little endian int16
+    for (; numSamples > 0; --numSamples, buffer += 2) {
+        int16_t sample[2];
+        sample[0] = buffer[0] * std::numeric_limits<int16_t>::max();
+        sample[1] = buffer[1] * std::numeric_limits<int16_t>::max();
 
-    if (bytesWritten < 0) {
-        m_errorProvider->setError(Error::Provider::ErrorType::Error,
-                                  tr("IO Error"),
-                                  m_device->errorString());
+        int64_t bytesWritten = m_device->write((char*)sample, 4);
 
-        return false;
-    } else if ((uint64_t)bytesWritten < numSamples*4) {
-        m_errorProvider->setError(Error::Provider::ErrorType::Error,
-                                  tr("WAV IO Error"),
-                                  tr("FIXME: Device didn't feel like writing all of our data"));
+        if (bytesWritten < 0) {
+            m_errorProvider->setError(Error::Provider::ErrorType::Error,
+                                      tr("IO Error"),
+                                      m_device->errorString());
 
-        return false;
-    } else {
-        return true;
+            return false;
+        } else if ((uint64_t)bytesWritten < 4) {
+            m_errorProvider->setError(Error::Provider::ErrorType::Error,
+                                      tr("WAV IO Error"),
+                                      tr("FIXME: Device didn't feel like writing all of our data"));
+
+            return false;
+        }
     }
+
+    return true;
 }
 
 bool WavFileExporter::finishTrack()
