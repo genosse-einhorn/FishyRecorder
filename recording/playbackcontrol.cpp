@@ -146,8 +146,6 @@ void PlaybackControl::splitTrackBtnClicked()
 void PlaybackControl::deleteTrackBtnClicked()
 {
     m_controller->deleteTrack(m_currentTrackNo);
-
-    trackDeselected();
 }
 
 void PlaybackControl::updateTime(uint64_t position)
