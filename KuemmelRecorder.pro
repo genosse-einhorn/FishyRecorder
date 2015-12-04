@@ -8,7 +8,7 @@ QT       += core widgets concurrent
 CONFIG   += link_pkgconfig c++11
 CONFIG   -= exceptions rtti
 
-PKGCONFIG += portaudio-2.0 sqlite3 poppler-qt5
+PKGCONFIG += portaudio-2.0 sqlite3 poppler-qt5 flac
 
 TARGET   = KuemmelRecorder
 TEMPLATE = app
@@ -46,7 +46,8 @@ SOURCES += \
     presentation/presentationtab.cpp \
     presentation/welcomepane.cpp \
     presentation/pdfpresenter.cpp \
-    presentation/pdfpreviewwidget.cpp
+    presentation/pdfpreviewwidget.cpp \
+    export/flacfileexporter.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -79,7 +80,8 @@ HEADERS += \
     presentation/presentationtab.h \
     presentation/welcomepane.h \
     presentation/pdfpresenter.h \
-    presentation/pdfpreviewwidget.h
+    presentation/pdfpreviewwidget.h \
+    export/flacfileexporter.h
 
 FORMS    += \
     main/mainwindow.ui \

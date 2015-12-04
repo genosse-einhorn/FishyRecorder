@@ -4,6 +4,7 @@
 #include "recording/trackcontroller.h"
 #include "export/wavfileexporter.h"
 #include "export/mp3fileexporter.h"
+#include "export/flacfileexporter.h"
 #include "export/progressdialog.h"
 #include "export/coordinator.h"
 #include "export/mp3paramsdialog.h"
@@ -43,7 +44,7 @@ ExportButtonGroup::ExportButtonGroup(const Recording::TrackController *controlle
 
     QObject::connect(ui->exportAsWavBtn, &QAbstractButton::clicked, this, &ExportButtonGroup::wavBtnClicked);
     QObject::connect(ui->exportAsMp3Btn, &QAbstractButton::clicked, this, &ExportButtonGroup::mp3BtnClicked);
-}
+    QObject::connect(ui->exportAsFlacBtn, &QAbstractButton::clicked, this, &ExportButtonGroup::flacBtnClicked);}
 
 ExportButtonGroup::~ExportButtonGroup()
 {
@@ -96,6 +97,22 @@ void ExportButtonGroup::mp3BtnClicked()
     dialog->setWindowTitle(tr("Exporting MP3 files"));
 
     kickoffExport(new Coordinator(m_controller, dir, [=](){ return new Mp3FileExporter(artist, album, brate); }, this), dialog);
+}
+
+void ExportButtonGroup::flacBtnClicked()
+{
+    QString dir = QFileDialog::getExistingDirectory(this,
+                                                    tr("Select the directory to place the FLAC files in"),
+                                                    QString(),
+                                                    QFileDialog::ShowDirsOnly);
+
+    if (!dir.size())
+        return;
+
+    auto dialog = new ProgressDialog(this);
+    dialog->setWindowTitle(tr("Exporting FLAC files"));
+
+    kickoffExport(new Coordinator(m_controller, dir, [](){ return new FlacFileExporter(); }, this), dialog);
 }
 
 } // namespace Export

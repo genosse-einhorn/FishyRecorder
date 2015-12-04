@@ -28,6 +28,7 @@ public:
 private slots:
     void wavBtnClicked();
     void mp3BtnClicked();
+    void flacBtnClicked();
 
 private:
     Ui::ExportButtonGroup *ui;
