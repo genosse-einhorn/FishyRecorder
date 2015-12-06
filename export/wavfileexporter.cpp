@@ -23,6 +23,13 @@ struct FmtHeader {
     uint32_t byteRate;
     uint16_t blockAlign;
     uint16_t bitsPerSample;
+    uint32_t extendedSize;
+};
+
+struct FactChunk {
+    char     chunkID[4];   // "fact"
+    uint32_t chunkSize;    // Chunk size: minimum 4
+    uint32_t sampleLength; // Number of samples (per channel)
 };
 
 struct DataHeader {
@@ -62,26 +69,33 @@ bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const 
 
     RiffHeader riff;
     FmtHeader  fmt;
+    FactChunk  fact;
     DataHeader data;
 
     strncpy(data.chunkID, "data", 4);
-    data.chunkSize = (uint32_t)trackLength * 4;
+    data.chunkSize = (uint32_t)trackLength * 8;
 
     strncpy(riff.chunkID, "RIFF", 4);
     riff.chunkSize = 4 + sizeof(FmtHeader) + sizeof(DataHeader) + data.chunkSize;
     strncpy(riff.format, "WAVE", 4);
 
+    strncpy(fact.chunkID, "fact", 4);
+    fact.chunkSize = 4;
+    fact.sampleLength = (uint32_t)trackLength;
+
     strncpy(fmt.chunkID,  "fmt ",  4);
     fmt.chunkSize = sizeof(FmtHeader)-8;
-    fmt.audioFormat   = 1;
+    fmt.audioFormat   = 3; // floating point
     fmt.numChannels   = 2;
     fmt.sampleRate    = 44100;
-    fmt.byteRate      = fmt.sampleRate * fmt.numChannels * sizeof(uint16_t);
-    fmt.blockAlign    = fmt.numChannels * sizeof(uint16_t);
-    fmt.bitsPerSample = sizeof(uint16_t)*8;
+    fmt.byteRate      = fmt.sampleRate * fmt.numChannels * sizeof(float);
+    fmt.blockAlign    = fmt.numChannels * sizeof(float);
+    fmt.bitsPerSample = 32;
+    fmt.extendedSize  = 0;
 
     if (output->write((char *)&riff, sizeof(RiffHeader)) == sizeof(RiffHeader)
             && output->write((char *)&fmt, sizeof(FmtHeader)) == sizeof(FmtHeader)
+            && output->write((char *)&fact, sizeof(FactChunk)) == sizeof(FactChunk)
             && output->write((char *)&data, sizeof(DataHeader)) == sizeof(DataHeader)) {
         return true;
     } else {
@@ -105,27 +119,20 @@ bool WavFileExporter::encodeData(const float *buffer, uint64_t numSamples)
 
     m_samplesWritten += numSamples;
 
-    // write audio data as little endian int16
-    for (; numSamples > 0; --numSamples, buffer += 2) {
-        int16_t sample[2];
-        sample[0] = buffer[0] * std::numeric_limits<int16_t>::max();
-        sample[1] = buffer[1] * std::numeric_limits<int16_t>::max();
+    int64_t bytesWritten = m_device->write((char*)buffer, numSamples*sizeof(float)*2);
 
-        int64_t bytesWritten = m_device->write((char*)sample, 4);
+    if (bytesWritten < 0) {
+        m_errorProvider->setError(Error::Provider::ErrorType::Error,
+                                  tr("IO Error"),
+                                  m_device->errorString());
 
-        if (bytesWritten < 0) {
-            m_errorProvider->setError(Error::Provider::ErrorType::Error,
-                                      tr("IO Error"),
-                                      m_device->errorString());
+        return false;
+    } else if ((uint64_t)bytesWritten < numSamples*sizeof(float)*2) {
+        m_errorProvider->setError(Error::Provider::ErrorType::Error,
+                                  tr("WAV IO Error"),
+                                  tr("FIXME: Device didn't feel like writing all of our data"));
 
-            return false;
-        } else if ((uint64_t)bytesWritten < 4) {
-            m_errorProvider->setError(Error::Provider::ErrorType::Error,
-                                      tr("WAV IO Error"),
-                                      tr("FIXME: Device didn't feel like writing all of our data"));
-
-            return false;
-        }
+        return false;
     }
 
     return true;
