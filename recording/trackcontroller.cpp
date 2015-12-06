@@ -76,7 +76,7 @@ void Recording::TrackController::splitTrack(int trackIndex, uint64_t after_n_sam
                       originalTrack.start + after_n_samples,
                       originalTrack.length - after_n_samples,
                       QString(),
-                      originalTrack.timestamp.addMSecs(after_n_samples * 1000 / 44100)); //FIXME: check overflow
+                      originalTrack.timestamp.addMSecs(after_n_samples * 1000 / 48000)); //FIXME: check overflow
 }
 
 void Recording::TrackController::deleteTrack(int trackIndex)

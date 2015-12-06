@@ -140,7 +140,7 @@ void PlaybackSlave::setPlaybackState(bool playing, bool fireChangeEvent)
         monitor_params.hostApiSpecificStreamInfo = nullptr;
         monitor_params.suggestedLatency = info->defaultHighOutputLatency;
 
-        err = Pa_OpenStream(&m_stream, nullptr, &monitor_params, 44100, paFramesPerBufferUnspecified, paNoFlag, stream_callback, this);
+        err = Pa_OpenStream(&m_stream, nullptr, &monitor_params, 48000, paFramesPerBufferUnspecified, paNoFlag, stream_callback, this);
 
         if (Error::Simulation::SIMULATE("openAudioStream")) {
             m_errorProvider->simulate(Error::Provider::ErrorType::Error, "openAudioStream");

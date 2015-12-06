@@ -32,9 +32,9 @@ template<typename... Args> struct SELECT_SIGNAL_OVERLOAD {
 
 namespace Util {
     inline QString formatTime(uint64_t samples) {
-        uint64_t seconds = (samples/44100) % 60;
-        uint64_t minutes = samples/44100/60 % 60;
-        uint64_t hours   = samples/44100/60/60;
+        uint64_t seconds = samples/48000 % 60;
+        uint64_t minutes = samples/48000/60 % 60;
+        uint64_t hours   = samples/48000/60/60;
 
         return QString("%1:%2:%3").arg(hours).arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
     }

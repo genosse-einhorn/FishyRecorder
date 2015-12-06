@@ -4,8 +4,8 @@
 
 static QString samples_to_time(uint64_t n_samples)
 {
-    uint64_t minutes = n_samples/44100/60;
-    uint64_t seconds = n_samples/44100 % 60;
+    uint64_t minutes = n_samples/48000/60;
+    uint64_t seconds = n_samples/48000 % 60;
 
     return QString("%1:%2").arg(minutes).arg(seconds, 2, 10, QChar('0'));
 }

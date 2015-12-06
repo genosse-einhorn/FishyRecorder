@@ -87,7 +87,7 @@ bool WavFileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const 
     fmt.chunkSize = sizeof(FmtHeader)-8;
     fmt.audioFormat   = 3; // floating point
     fmt.numChannels   = 2;
-    fmt.sampleRate    = 44100;
+    fmt.sampleRate    = 48000;
     fmt.byteRate      = fmt.sampleRate * fmt.numChannels * sizeof(float);
     fmt.blockAlign    = fmt.numChannels * sizeof(float);
     fmt.bitsPerSample = 32;

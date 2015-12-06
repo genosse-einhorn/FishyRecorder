@@ -13,6 +13,8 @@ Mp3FileExporter::Mp3FileExporter(const QString& artist, const QString& album, in
     lame_set_quality(m_lame_gbf, 5);
     lame_set_mode(m_lame_gbf, JOINT_STEREO);
     lame_set_brate(m_lame_gbf, brate);
+    lame_set_in_samplerate(m_lame_gbf, 48000);
+    lame_set_out_samplerate(m_lame_gbf, 48000);
 
     // ID3 tags are barely documented, but luckily we can read the lame(1) source code...
     id3tag_init(m_lame_gbf);
@@ -90,7 +92,7 @@ bool Export::Mp3FileExporter::beginTrack(QIODevice *output, uint64_t trackLength
 
 bool Export::Mp3FileExporter::encodeData(const float *buffer, uint64_t numSamples)
 {
-    unsigned char outBuffer[(numSamples/44100 + 1)*lame_get_brate(m_lame_gbf) + 7200];
+    unsigned char outBuffer[(numSamples/48000 + 1)*lame_get_brate(m_lame_gbf) + 7200];
 
     int bytesEncoded = lame_encode_buffer_interleaved_ieee_float(m_lame_gbf, buffer, (int)numSamples, outBuffer, sizeof(outBuffer));
 

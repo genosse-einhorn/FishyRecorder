@@ -150,15 +150,15 @@ void PlaybackControl::deleteTrackBtnClicked()
 
 void PlaybackControl::updateTime(uint64_t position)
 {
-    uint64_t total_seconds = (m_trackLength/44100) % 60;
-    uint64_t total_minutes = m_trackLength/44100/60 % 60;
-    uint64_t total_hours   = m_trackLength/44100/60/60;
+    uint64_t total_seconds = m_trackLength/48000 % 60;
+    uint64_t total_minutes = m_trackLength/48000/60 % 60;
+    uint64_t total_hours   = m_trackLength/48000/60/60;
 
     QString total_str = QString("%1:%2:%3").arg(total_hours).arg(total_minutes, 2, 10, QChar('0')).arg(total_seconds, 2, 10, QChar('0'));
 
-    uint64_t seconds = (position/44100) % 60;
-    uint64_t minutes = position/44100/60 % 60;
-    uint64_t hours   = position/44100/60/60;
+    uint64_t seconds = position/48000 % 60;
+    uint64_t minutes = position/48000/60 % 60;
+    uint64_t hours   = position/48000/60/60;
 
     QString current_str = QString("%1:%2:%3").arg(hours).arg(minutes, 2, 10, QChar('0')).arg(seconds, 2, 10, QChar('0'));
 

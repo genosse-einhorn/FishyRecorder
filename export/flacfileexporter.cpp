@@ -57,7 +57,7 @@ bool FlacFileExporter::beginTrack(QIODevice *output, uint64_t trackLength, const
     FLAC__stream_encoder_set_streamable_subset(m_encoder, true);
     FLAC__stream_encoder_set_channels(m_encoder, 2);
     FLAC__stream_encoder_set_bits_per_sample(m_encoder, 16);
-    FLAC__stream_encoder_set_sample_rate(m_encoder, 44100);
+    FLAC__stream_encoder_set_sample_rate(m_encoder, 48000);
 
     // Initialize stuff for dithering algorithm
     qsrand(QTime::currentTime().msec() * QTime::currentTime().second());

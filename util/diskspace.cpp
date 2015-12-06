@@ -75,8 +75,8 @@ QString DiskSpace::humanReadable(uint64_t space, bool withRecordingTime)
         return sizeStr;
 
     uint64_t samples = space/4;
-    uint64_t minutes = samples/44100/60 % 60;
-    uint64_t hours   = samples/44100/60/60;
+    uint64_t minutes = samples/48000/60 % 60;
+    uint64_t hours   = samples/48000/60/60;
 
     QString timeStr;
 

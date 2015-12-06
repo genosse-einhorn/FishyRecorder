@@ -221,7 +221,7 @@ Recording::SampleMover::reopenStream()
     PaStreamParameters *monitor_params_ptr = m_monitorDevice != paNoDevice ? &monitor_params : nullptr;
 
     if (input_params_ptr || monitor_params_ptr) {
-        err = Pa_OpenStream(&m_stream, input_params_ptr, monitor_params_ptr, 44100, paFramesPerBufferUnspecified, paNoFlag, stream_callback, this);
+        err = Pa_OpenStream(&m_stream, input_params_ptr, monitor_params_ptr, 48000, paFramesPerBufferUnspecified, paNoFlag, stream_callback, this);
 
         if (Error::Simulation::SIMULATE("openAudioStream")) {
             m_deviceErrorProvider->simulate(Error::Provider::ErrorType::Error, "openAudioStream");
