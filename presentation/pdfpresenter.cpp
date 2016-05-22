@@ -91,6 +91,8 @@ void PdfPresenter::kickoffPreviewList()
 
         auto *watcher = new QFutureWatcher<std::pair<int, QPixmap>>(this);
         QObject::connect(watcher, &QFutureWatcher<std::pair<int, QPixmap>>::finished, this, &PdfPresenter::savePreview);
+        QObject::connect(this, &QObject::destroyed, watcher, &QFutureWatcher<std::pair<int, QPixmap>>::cancel);
+        QObject::connect(this, &QObject::destroyed, watcher, &QFutureWatcher<std::pair<int, QPixmap>>::deleteLater);
 
         watcher->setFuture(QtConcurrent::run(createThumbnail, m_pdf, i));
     }
@@ -179,6 +181,10 @@ PdfPresenter::~PdfPresenter()
     delete ui;
 
     delete m_presentationImageLbl;
+
+    m_thisPage->cancel();
+    m_prevPage->cancel();
+    m_nextPage->cancel();
 }
 
 void PdfPresenter::setScreen(const QRect &screen)
