@@ -40,6 +40,8 @@ public:
 
     TrackDataAccessor *accessTrackData(int trackId) const;
 
+    int trackIdFromStart(uint64_t trackStart);
+
 signals:
     void currentTrackTimeChanged(uint64_t n_samples);
     void beforeTrackAdded(int newTrackIndex);

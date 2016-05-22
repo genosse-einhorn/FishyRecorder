@@ -50,11 +50,11 @@ PlaybackControl::~PlaybackControl()
     delete m_ui;
 }
 
-void PlaybackControl::trackSelected(int trackNo)
+void PlaybackControl::trackSelected(uint64_t trackStart)
 {
-    m_currentTrackNo = trackNo;
+    m_currentTrackStart = trackStart;
 
-    auto accessor = m_controller->accessTrackData(trackNo);
+    auto accessor = m_controller->accessTrackData(m_controller->trackIdFromStart(trackStart));
 
     m_trackLength = accessor->length();
 
@@ -66,7 +66,7 @@ void PlaybackControl::trackSelected(int trackNo)
 
         this->setEnabled(true);
     } else {
-        qWarning() << "Invalid track number" << trackNo;
+        qWarning() << "Invalid track number" << trackStart;
 
         trackDeselected();
     }
@@ -138,14 +138,14 @@ void PlaybackControl::splitTrackBtnClicked()
         return;
     }
 
-    m_controller->splitTrack(m_currentTrackNo, position);
+    m_controller->splitTrack(m_controller->trackIdFromStart(m_currentTrackStart), position);
 
-    trackSelected(m_currentTrackNo);
+    trackSelected(m_controller->trackIdFromStart(m_currentTrackStart));
 }
 
 void PlaybackControl::deleteTrackBtnClicked()
 {
-    m_controller->deleteTrack(m_currentTrackNo);
+    m_controller->deleteTrack(m_controller->trackIdFromStart(m_currentTrackStart));
 }
 
 void PlaybackControl::updateTime(uint64_t position)

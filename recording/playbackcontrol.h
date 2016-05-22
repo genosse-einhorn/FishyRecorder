@@ -23,7 +23,7 @@ public:
     ~PlaybackControl();
 
 public slots:
-    void trackSelected(int trackNo);
+    void trackSelected(uint64_t trackStart);
     void trackDeselected();
     void monitorDeviceChanged(PaDeviceIndex index);
 
@@ -44,7 +44,7 @@ private:
     PlaybackSlave   *m_playbackSlave;
     QThread         *m_playbackThread;
     uint64_t         m_trackLength;
-    int              m_currentTrackNo;
+    uint64_t         m_currentTrackStart;
 };
 
 

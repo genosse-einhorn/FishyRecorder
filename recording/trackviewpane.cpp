@@ -75,7 +75,7 @@ void TrackViewPane::selectedRowChanged()
         //FIXME: is this a layering violation?
         int index = m_trackView->selectionModel()->selectedRows()[0].row();
 
-        m_playback->trackSelected(index);
+        m_playback->trackSelected(m_controller->trackStart(index));
     } else {
         m_playback->trackDeselected();
     }

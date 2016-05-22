@@ -136,6 +136,16 @@ Recording::TrackDataAccessor *Recording::TrackController::accessTrackData(int tr
                                             trackId);
 }
 
+int Recording::TrackController::trackIdFromStart(uint64_t trackStart)
+{
+    for (int i = 0; i < (int)m_tracks.size(); ++i) {
+        if (m_tracks[i].start == trackStart)
+            return i;
+    }
+
+    return -1;
+}
+
 void Recording::TrackController::onRecordingStateChanged(bool recording, uint64_t n_samples)
 {
     if (recording == m_currentlyRecording)
