@@ -14,6 +14,7 @@ class PresentationTab;
 class WelcomePane;
 class PdfPresenter;
 class ScreenViewControl;
+class PresentationWindow;
 
 class PresentationTab : public QWidget
 {
@@ -41,7 +42,6 @@ public slots:
     // screen blanking
     void blank(bool blank = true);
     void freeze(bool freeze = true);
-    void clear();
 
 private slots:
     void openPdf();
@@ -53,8 +53,7 @@ private:
     Ui::PresentationTab *ui;
     WelcomePane *m_welcome;
 
-    QLabel  *m_overlayWindow;
-    bool     m_whileSettingOverlay = false;
+    PresentationWindow *m_presentationWindow { nullptr };
 
     QRect m_currentScreen { 0, 0, 0, 0 };
 

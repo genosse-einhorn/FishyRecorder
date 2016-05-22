@@ -3,6 +3,7 @@
 #include "presentation/screenviewcontrol.h"
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
+#include "presentation/presentationwindow.h"
 #include "util/misc.h"
 
 #include <QGridLayout>
@@ -24,8 +25,7 @@ namespace Presentation {
 
 PresentationTab::PresentationTab(QWidget *parent) :
     QWidget(parent),
-    ui(new Ui::PresentationTab),
-    m_overlayWindow(new QLabel(this))
+    ui(new Ui::PresentationTab)
 {
     ui->setupUi(this);
 
@@ -37,15 +37,9 @@ PresentationTab::PresentationTab(QWidget *parent) :
 
     QObject::connect(ui->presentationTabWidget, &QTabWidget::currentChanged, this, &PresentationTab::tabChanged);
 
-    m_overlayWindow->setWindowFlags(Qt::Window | Qt::Tool | Qt::FramelessWindowHint);
-    m_overlayWindow->setAttribute(Qt::WA_ShowWithoutActivating);
-    m_overlayWindow->setStyleSheet("background-color: black");
-    m_overlayWindow->setAutoFillBackground(true);
-    m_overlayWindow->setCursor(Qt::BlankCursor);
-
-#ifdef Q_OS_WIN32
-    QtWin::setWindowExcludedFromPeek(m_overlayWindow, true);
-#endif
+    m_presentationWindow = new PresentationWindow(this);
+    QObject::connect(m_presentationWindow, &PresentationWindow::blankChanged, this, &PresentationTab::blankChanged);
+    QObject::connect(m_presentationWindow, &PresentationWindow::freezeChanged, this, &PresentationTab::freezeChanged);
 }
 
 PresentationTab::~PresentationTab()
@@ -60,12 +54,12 @@ void PresentationTab::screenUpdated(const QRect &screen)
         m_screenView->screenUpdated(screen);
 #endif
 
-    // reposition the blank window
-    m_overlayWindow->setGeometry(screen.x(), screen.y(), screen.width(), screen.height());
+    // reposition the presentation window
+    m_presentationWindow->setScreen(screen);
 
 #ifdef Q_OS_WIN32
-    HWND hwnd = (HWND)m_overlayWindow->winId();
-    ::SetWindowPos(hwnd, HWND_TOPMOST, screen.x(), screen.y(), screen.width(), screen.height(), SWP_NOACTIVATE);
+    //HWND hwnd = (HWND)m_overlayWindow->winId();
+    //::SetWindowPos(hwnd, HWND_TOPMOST, screen.x(), screen.y(), screen.width(), screen.height(), SWP_NOACTIVATE);
 #endif
 
     emit sigScreenChange(screen);
@@ -75,47 +69,12 @@ void PresentationTab::screenUpdated(const QRect &screen)
 
 void PresentationTab::blank(bool blank)
 {
-    if (!blank)
-        return clear();
-
-    Util::BooleanFlagSetter raiiFlag(&this->m_whileSettingOverlay);
-
-    QPixmap p(m_currentScreen.width(), m_currentScreen.height());
-    p.fill(Qt::black);
-    m_overlayWindow->setPixmap(p);
-    m_overlayWindow->show();
-
-    emit freezeChanged(false);
-    emit blankChanged(true);
+    m_presentationWindow->setBlank(blank);
 }
 
 void PresentationTab::freeze(bool freeze)
 {
-    if (!freeze)
-        return clear();
-
-    Util::BooleanFlagSetter raiiFlag(&this->m_whileSettingOverlay);
-
-    m_overlayWindow->setPixmap(QPixmap::grabWindow(QApplication::desktop()->winId(),
-                                                   m_currentScreen.x(),
-                                                   m_currentScreen.y(),
-                                                   m_currentScreen.width(),
-                                                   m_currentScreen.height()));
-    m_overlayWindow->show();
-
-    emit blankChanged(false);
-    emit freezeChanged(true);
-}
-
-void PresentationTab::clear()
-{
-    if (m_whileSettingOverlay)
-        return;
-
-    m_overlayWindow->hide();
-
-    emit freezeChanged(false);
-    emit blankChanged(false);
+    m_presentationWindow->setFreeze(freeze);
 }
 
 PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
@@ -141,6 +100,7 @@ PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
 
     QObject::connect(presenter, &PdfPresenter::canNextPageChanged, this, &PresentationTab::canNextSlideChanged);
     QObject::connect(presenter, &PdfPresenter::canPrevPageChanged, this, &PresentationTab::canPrevSlideChanged);
+    QObject::connect(presenter, &PdfPresenter::presentWidgetRequest, m_presentationWindow, &PresentationWindow::setWidget);
 
     presenter->setScreen(m_currentScreen);
 

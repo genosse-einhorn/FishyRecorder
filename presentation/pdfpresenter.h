@@ -4,9 +4,8 @@
 #include <QWidget>
 #include <QFutureWatcher>
 #include <QPixmap>
+#include <QLabel>
 #include <memory>
-
-class QLabel;
 
 namespace Poppler {
 class Document;
@@ -31,6 +30,9 @@ signals:
     void closeRequested();
     void canNextPageChanged(bool can);
     void canPrevPageChanged(bool can);
+
+    // supposed to be connected to PresentationWindow::presentWidget
+    void presentWidgetRequest(QWidget *widget);
 
 public:
     bool canNextPage() { return m_canNextPage; }
@@ -57,11 +59,10 @@ private:
     Ui::PdfPresenter *ui;
 
     std::shared_ptr<Poppler::Document>  m_pdf                  = nullptr;
-    QWidget                            *m_presentationWindow   = nullptr;
     QLabel                             *m_presentationImageLbl = nullptr;
 
-    int presentationWidth() { if (m_presentationWindow) return m_presentationWindow->width(); else return 10; }
-    int presentationHeight() { if (m_presentationWindow) return m_presentationWindow->height(); else return 10; }
+    int presentationWidth() { if (m_presentationImageLbl) return m_presentationImageLbl->width(); else return 10; }
+    int presentationHeight() { if (m_presentationImageLbl) return m_presentationImageLbl->height(); else return 10; }
 
     QFutureWatcher<QPixmap> *m_thisPage = nullptr;
     QFutureWatcher<QPixmap> *m_nextPage = nullptr;

@@ -146,19 +146,22 @@ void PdfPresenter::updatePresentedPage()
 
     // Set preview window
     ui->preview->setPage(m_currentPageNo);
+
+    // Request our slide to be presented
+    emit presentWidgetRequest(m_presentationImageLbl);
 }
 
 PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
 {
     Poppler::Document *doc = Poppler::Document::load(fileName);
 
+    if (!doc)
+        return nullptr;
+
     doc->setRenderHint(Poppler::Document::Antialiasing, true);
     doc->setRenderHint(Poppler::Document::TextAntialiasing, true);
     doc->setRenderHint(Poppler::Document::TextHinting, true);
     doc->setRenderHint(Poppler::Document::TextSlightHinting, true);
-
-    if (!doc)
-        return nullptr;
 
     PdfPresenter *presenter = new PdfPresenter();
     presenter->m_pdf.reset(doc);
@@ -175,47 +178,23 @@ PdfPresenter::~PdfPresenter()
 {
     delete ui;
 
-    qDebug() << "Deleting the presentation window";
-    delete m_presentationWindow;
+    delete m_presentationImageLbl;
 }
 
 void PdfPresenter::setScreen(const QRect &screen)
 {
-    delete m_presentationWindow;
-    m_presentationWindow = m_presentationImageLbl = nullptr;
+    delete m_presentationImageLbl;
+    m_presentationImageLbl = nullptr;
 
     if (!screen.width() || !screen.height())
         return;
 
-    m_presentationWindow = new QWidget();
     m_presentationImageLbl = new QLabel();
 
     m_presentationImageLbl->setStyleSheet("background-color:black;");
+    m_presentationImageLbl->setAlignment(Qt::AlignCenter);
+    m_presentationImageLbl->setFixedSize(screen.size());
     m_presentationImageLbl->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-
-    QGridLayout *gridLayout = new QGridLayout(m_presentationWindow);
-    gridLayout->setMargin(0);
-    gridLayout->addWidget(m_presentationImageLbl, 0, 0, 1, 1, Qt::AlignCenter);
-
-    m_presentationWindow->setLayout(gridLayout);
-
-#ifdef Q_OS_WIN32
-    QtWin::setWindowExcludedFromPeek(m_presentationWindow, true);
-#endif
-
-    // black background
-    QPalette pal(m_presentationWindow->palette());
-    pal.setColor(QPalette::Background, Qt::black);
-    m_presentationWindow->setAutoFillBackground(true);
-    m_presentationWindow->setPalette(pal);
-
-    m_presentationWindow->show();
-
-    // now that we have the window, position it
-    m_presentationWindow->setWindowFlags(Qt::FramelessWindowHint | Qt::Tool);
-    m_presentationWindow->setWindowState(Qt::WindowFullScreen);
-    m_presentationWindow->setGeometry(screen.left(), screen.top(), screen.width(), screen.height());
-    m_presentationWindow->setVisible(true);
 
     resetPresentationPixmaps();
     updatePresentedPage();
@@ -231,7 +210,7 @@ void PdfPresenter::nextPage()
 
     m_currentPageNo += 1;
 
-    if (m_presentationWindow) {
+    if (m_presentationImageLbl) {
         auto *oldPrev = m_prevPage;
         m_prevPage = m_thisPage;
         m_thisPage = m_nextPage;
@@ -249,7 +228,7 @@ void PdfPresenter::previousPage()
 
     m_currentPageNo -= 1;
 
-    if (m_presentationWindow) {
+    if (m_presentationImageLbl) {
         auto *oldNext = m_nextPage;
         m_nextPage = m_thisPage;
         m_thisPage = m_prevPage;
@@ -263,7 +242,7 @@ void PdfPresenter::previousPage()
 
 void PdfPresenter::resetPresentationPixmaps()
 {
-    if (m_presentationWindow) {
+    if (m_presentationImageLbl) {
         m_prevPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo-1, presentationWidth(), presentationHeight()));
         m_thisPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo  , presentationWidth(), presentationHeight()));
         m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));

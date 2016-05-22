@@ -47,7 +47,8 @@ SOURCES += \
     presentation/welcomepane.cpp \
     presentation/pdfpresenter.cpp \
     presentation/pdfpreviewwidget.cpp \
-    export/flacfileexporter.cpp
+    export/flacfileexporter.cpp \
+    presentation/presentationwindow.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -81,7 +82,8 @@ HEADERS += \
     presentation/welcomepane.h \
     presentation/pdfpresenter.h \
     presentation/pdfpreviewwidget.h \
-    export/flacfileexporter.h
+    export/flacfileexporter.h \
+    presentation/presentationwindow.h
 
 FORMS    += \
     main/mainwindow.ui \
