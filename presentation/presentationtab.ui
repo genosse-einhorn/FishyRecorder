@@ -34,9 +34,12 @@
      <property name="documentMode">
       <bool>false</bool>
      </property>
+     <property name="tabsClosable">
+      <bool>true</bool>
+     </property>
      <widget class="QWidget" name="controlTab">
       <attribute name="title">
-       <string>Control</string>
+       <string>Start</string>
       </attribute>
       <layout class="QVBoxLayout" name="verticalLayout">
        <property name="spacing">
@@ -56,49 +59,6 @@
        </property>
        <item>
         <widget class="QStackedWidget" name="controlStack"/>
-       </item>
-      </layout>
-     </widget>
-     <widget class="QWidget" name="screenViewTab">
-      <attribute name="title">
-       <string>Screen View</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_2">
-       <property name="spacing">
-        <number>0</number>
-       </property>
-       <property name="leftMargin">
-        <number>0</number>
-       </property>
-       <property name="topMargin">
-        <number>0</number>
-       </property>
-       <property name="rightMargin">
-        <number>0</number>
-       </property>
-       <property name="bottomMargin">
-        <number>0</number>
-       </property>
-       <item>
-        <widget class="QStackedWidget" name="screenViewStack">
-         <widget class="QWidget" name="page">
-          <layout class="QGridLayout" name="gridLayout">
-           <item row="0" column="0">
-            <widget class="QLabel" name="label">
-             <property name="text">
-              <string>This functionality is only available on Windows 8 or higher.</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-             <property name="wordWrap">
-              <bool>true</bool>
-             </property>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-        </widget>
        </item>
       </layout>
      </widget>

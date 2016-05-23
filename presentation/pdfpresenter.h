@@ -1,6 +1,8 @@
 #ifndef PRESENTATION_PDFPRESENTER_H
 #define PRESENTATION_PDFPRESENTER_H
 
+#include "presenterbase.h"
+
 #include <QWidget>
 #include <QFutureWatcher>
 #include <QPixmap>
@@ -17,31 +19,24 @@ namespace Ui {
 class PdfPresenter;
 }
 
-class PdfPresenter : public QWidget
+class PdfPresenter : public PresenterBase
 {
     Q_OBJECT
 
 public:
     static PdfPresenter* loadPdfFile(const QString& fileName);
-
     ~PdfPresenter();
 
-signals:
-    void closeRequested();
-    void canNextPageChanged(bool can);
-    void canPrevPageChanged(bool can);
-
-    // supposed to be connected to PresentationWindow::presentWidget
-    void presentWidgetRequest(QWidget *widget);
-
 public:
-    bool canNextPage() { return m_canNextPage; }
-    bool canPrevPage() { return m_canPrevPage; }
+    bool canNextPage() override { return m_canNextPage; }
+    bool canPrevPage() override { return m_canPrevPage; }
+    QString title() override { return m_title; }
 
 public slots:
-    void setScreen(const QRect& screen);
-    void nextPage();
-    void previousPage();
+    void setScreen(const QRect& screen) override;
+    void nextPage() override;
+    void previousPage() override;
+    void tabVisible() override;
 
 private slots:
     void closeBtnClicked();
@@ -72,16 +67,18 @@ private:
 
     bool m_canNextPage = false;
     bool m_canPrevPage = false;
+    QString m_title { "Dummy" };
+
     void setCanNextPage(bool can) {
         if (m_canNextPage != can) {
             m_canNextPage = can;
-            emit canNextPageChanged(can);
+            emit controlsChanged();
         }
     }
     void setCanPrevPage(bool can) {
         if (m_canPrevPage != can) {
             m_canPrevPage = can;
-            emit canPrevPageChanged(can);
+            emit controlsChanged();
         }
     }
 };

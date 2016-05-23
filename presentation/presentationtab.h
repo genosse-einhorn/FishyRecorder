@@ -2,6 +2,7 @@
 #define PRESENTATION_PRESENTATIONTAB_H
 
 #include <QWidget>
+#include <QPointer>
 
 class QLabel;
 
@@ -13,8 +14,8 @@ class PresentationTab;
 
 class WelcomePane;
 class PdfPresenter;
-class ScreenViewControl;
 class PresentationWindow;
+class PresenterBase;
 
 class PresentationTab : public QWidget
 {
@@ -36,8 +37,8 @@ signals:
 
 public slots:
     void screenUpdated(const QRect& screen);
-    void previousSlide() { emit sigPreviousSlide(); }
-    void nextSlide() { emit sigNextSlide(); }
+    void previousSlide();
+    void nextSlide();
 
     // screen blanking
     void blank(bool blank = true);
@@ -48,6 +49,8 @@ private slots:
     void openPpt();
     void slotNoSlides() { canNextSlideChanged(false); canPrevSlideChanged(false); }
     void tabChanged();
+    void syncTabState();
+    void tabClosed(int index);
 
 private:
     Ui::PresentationTab *ui;
@@ -56,12 +59,11 @@ private:
     PresentationWindow *m_presentationWindow { nullptr };
 
     QRect m_currentScreen { 0, 0, 0, 0 };
-
-#ifdef Q_OS_WIN32
-    ScreenViewControl *m_screenView = nullptr;
-#endif
+    QPointer<QWidget> m_lastActiveTab;
 
     Presentation::PdfPresenter *doPresentPdf(const QString &filename);
+
+    int insertTab(PresenterBase *widget);
 };
 
 

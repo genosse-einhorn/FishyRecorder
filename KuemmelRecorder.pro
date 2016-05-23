@@ -48,7 +48,8 @@ SOURCES += \
     presentation/pdfpresenter.cpp \
     presentation/pdfpreviewwidget.cpp \
     export/flacfileexporter.cpp \
-    presentation/presentationwindow.cpp
+    presentation/presentationwindow.cpp \
+    presentation/presenterbase.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -83,7 +84,8 @@ HEADERS += \
     presentation/pdfpresenter.h \
     presentation/pdfpreviewwidget.h \
     export/flacfileexporter.h \
-    presentation/presentationwindow.h
+    presentation/presentationwindow.h \
+    presentation/presenterbase.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -113,9 +115,11 @@ win32 {
 
     SOURCES += \
         presentation/screenviewcontrol.cpp \
+        presentation/screenviewpresenter.cpp \
         presentation/screenviewrenderer.cpp
     HEADERS += \
         presentation/screenviewcontrol.h \
+        presentation/screenviewpresenter.h \
         util/com.h \
         presentation/screenviewrenderer.h \
         presentation/screenviewshaders.h \

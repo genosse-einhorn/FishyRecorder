@@ -13,11 +13,6 @@
 #include <memory>
 #include <vector>
 
-#ifdef Q_OS_WIN32
-# include <QtWinExtras>
-# include <windows.h>
-#endif
-
 namespace {
     const int ICON_SIZE = 200;
 
@@ -56,7 +51,7 @@ namespace {
 namespace Presentation {
 
 PdfPresenter::PdfPresenter(QWidget *parent) :
-    QWidget(parent),
+    PresenterBase(parent),
     ui(new Ui::PdfPresenter)
 {
     ui->setupUi(this);
@@ -150,7 +145,7 @@ void PdfPresenter::updatePresentedPage()
     ui->preview->setPage(m_currentPageNo);
 
     // Request our slide to be presented
-    emit presentWidgetRequest(m_presentationImageLbl);
+    emit requestPresentation(m_presentationImageLbl);
 }
 
 PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
@@ -172,6 +167,8 @@ PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
     presenter->kickoffPreviewList();
     presenter->resetPresentationPixmaps();
     presenter->updatePresentedPage();
+
+    presenter->m_title = QFileInfo(fileName).fileName();
 
     return presenter;
 }
@@ -245,6 +242,12 @@ void PdfPresenter::previousPage()
     updatePresentedPage();
 }
 
+void PdfPresenter::tabVisible()
+{
+    // make sure our display is right
+    updatePresentedPage();
+}
+
 
 void PdfPresenter::resetPresentationPixmaps()
 {
@@ -257,7 +260,7 @@ void PdfPresenter::resetPresentationPixmaps()
 
 void PdfPresenter::closeBtnClicked()
 {
-    emit closeRequested();
+    this->deleteLater();
 }
 
 void PdfPresenter::itemSelected()

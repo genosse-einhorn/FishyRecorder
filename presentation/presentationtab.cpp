@@ -4,21 +4,19 @@
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
 #include "presentation/presentationwindow.h"
+#include "presentation/presenterbase.h"
 #include "util/misc.h"
 
 #include <QGridLayout>
+#include <QTemporaryDir>
 #include <QFileDialog>
 #include <QMessageBox>
 #include <QDebug>
 #include <QLabel>
-#include <QDesktopWidget>
-#include <QAbstractNativeEventFilter>
-#include <QAbstractEventDispatcher>
 
 #ifdef Q_OS_WIN32
-# include <QtWinExtras>
-# include <QAxObject>
-# include <windows.h>
+#   include "presentation/screenviewpresenter.h"
+#   include <QAxObject>
 #endif
 
 namespace Presentation {
@@ -32,14 +30,22 @@ PresentationTab::PresentationTab(QWidget *parent) :
     m_welcome = new WelcomePane(this);
     ui->controlStack->insertWidget(0, m_welcome);
 
+    ui->presentationTabWidget->tabBar()->setTabButton(0, QTabBar::LeftSide, nullptr);
+    ui->presentationTabWidget->tabBar()->setTabButton(0, QTabBar::RightSide, nullptr);
+
     QObject::connect(m_welcome, &WelcomePane::pdfRequested, this, &PresentationTab::openPdf);
     QObject::connect(m_welcome, &WelcomePane::pptRequested, this, &PresentationTab::openPpt);
 
     QObject::connect(ui->presentationTabWidget, &QTabWidget::currentChanged, this, &PresentationTab::tabChanged);
+    QObject::connect(ui->presentationTabWidget, &QTabWidget::tabCloseRequested, this, &PresentationTab::tabClosed);
 
     m_presentationWindow = new PresentationWindow(this);
     QObject::connect(m_presentationWindow, &PresentationWindow::blankChanged, this, &PresentationTab::blankChanged);
     QObject::connect(m_presentationWindow, &PresentationWindow::freezeChanged, this, &PresentationTab::freezeChanged);
+
+#ifdef Q_OS_WIN32
+    this->insertTab(new ScreenViewPresenter);
+#endif
 }
 
 PresentationTab::~PresentationTab()
@@ -49,22 +55,28 @@ PresentationTab::~PresentationTab()
 
 void PresentationTab::screenUpdated(const QRect &screen)
 {
-#ifdef Q_OS_WIN32
-    if (m_screenView)
-        m_screenView->screenUpdated(screen);
-#endif
-
     // reposition the presentation window
     m_presentationWindow->setScreen(screen);
-
-#ifdef Q_OS_WIN32
-    //HWND hwnd = (HWND)m_overlayWindow->winId();
-    //::SetWindowPos(hwnd, HWND_TOPMOST, screen.x(), screen.y(), screen.width(), screen.height(), SWP_NOACTIVATE);
-#endif
 
     emit sigScreenChange(screen);
 
     m_currentScreen = screen;
+}
+
+void PresentationTab::previousSlide()
+{
+    PresenterBase *p = qobject_cast<PresenterBase*>(ui->presentationTabWidget->currentWidget());
+    if (p) {
+        p->previousPage();
+    }
+}
+
+void PresentationTab::nextSlide()
+{
+    PresenterBase *p = qobject_cast<PresenterBase*>(ui->presentationTabWidget->currentWidget());
+    if (p) {
+        p->nextPage();
+    }
 }
 
 void PresentationTab::blank(bool blank)
@@ -88,27 +100,46 @@ PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
         return nullptr;
     }
 
-    int index = ui->controlStack->insertWidget(-1, presenter);
-    ui->controlStack->setCurrentIndex(index);
-
-    QObject::connect(presenter, &PdfPresenter::closeRequested, presenter, &QObject::deleteLater);
-    QObject::connect(presenter, &PdfPresenter::closeRequested, this, &PresentationTab::slotNoSlides);
-
-    QObject::connect(this, &PresentationTab::sigNextSlide, presenter, &PdfPresenter::nextPage);
-    QObject::connect(this, &PresentationTab::sigPreviousSlide, presenter, &PdfPresenter::previousPage);
-    QObject::connect(this, &PresentationTab::sigScreenChange, presenter, &PdfPresenter::setScreen);
-
-    QObject::connect(presenter, &PdfPresenter::canNextPageChanged, this, &PresentationTab::canNextSlideChanged);
-    QObject::connect(presenter, &PdfPresenter::canPrevPageChanged, this, &PresentationTab::canPrevSlideChanged);
-    QObject::connect(presenter, &PdfPresenter::presentWidgetRequest, m_presentationWindow, &PresentationWindow::setWidget);
-
-    presenter->setScreen(m_currentScreen);
-
-    // initially sync nex/prev button activations
-    emit canNextSlideChanged(presenter->canNextPage());
-    emit canPrevSlideChanged(presenter->canPrevPage());
+    int i = insertTab(presenter);
+    ui->presentationTabWidget->setCurrentIndex(i);
 
     return presenter;
+}
+
+int PresentationTab::insertTab(PresenterBase *widget)
+{
+    int tabIndex = ui->presentationTabWidget->insertTab(-1, widget, widget->title());
+
+    QObject::connect(widget, &PresenterBase::requestPresentation, m_presentationWindow, &PresentationWindow::setWidget);
+    QObject::connect(widget, &PresenterBase::controlsChanged, this, &PresentationTab::syncTabState);
+    QObject::connect(this, &PresentationTab::sigScreenChange, widget, &PresenterBase::setScreen);
+
+    widget->setScreen(m_currentScreen);
+
+    if (!widget->allowClose()) {
+        ui->presentationTabWidget->tabBar()->setTabButton(tabIndex, QTabBar::LeftSide, nullptr);
+        ui->presentationTabWidget->tabBar()->setTabButton(tabIndex, QTabBar::RightSide, nullptr);
+    }
+
+    return tabIndex;
+}
+
+void PresentationTab::syncTabState()
+{
+    PresenterBase *p = qobject_cast<PresenterBase*>(ui->presentationTabWidget->currentWidget());
+    if (!p)
+        return; // nothing to do here
+
+    ui->presentationTabWidget->setTabText(ui->presentationTabWidget->currentIndex(), p->title());
+    emit canNextSlideChanged(p->canNextPage());
+    emit canPrevSlideChanged(p->canPrevPage());
+}
+
+void PresentationTab::tabClosed(int index)
+{
+    auto w = ui->presentationTabWidget->widget(index);
+    if (w)
+        w->deleteLater();
 }
 
 void PresentationTab::openPdf()
@@ -173,17 +204,27 @@ error:
 
 void PresentationTab::tabChanged()
 {
-#ifdef Q_OS_WIN32
-    if (ui->presentationTabWidget->currentWidget() == ui->controlTab) {
-        delete m_screenView;
-        m_screenView = nullptr;
-    } else if (!m_screenView) {
-        m_screenView = new ScreenViewControl();
-        int index = ui->screenViewStack->insertWidget(-1, m_screenView);
-        ui->screenViewStack->setCurrentIndex(index);
-        m_screenView->screenUpdated(m_currentScreen);
+    // Notify last active tab about being hidden now
+    if (m_lastActiveTab) {
+        PresenterBase *p = qobject_cast<PresenterBase*>(m_lastActiveTab);
+        if (p) {
+            p->tabHidden();
+        }
     }
-#endif
+
+    // Update our state variable
+    m_lastActiveTab = ui->presentationTabWidget->currentWidget();
+
+    // Notify the new tab about being shown
+    if (ui->presentationTabWidget->currentWidget()) {
+        PresenterBase *p = qobject_cast<PresenterBase*>(ui->presentationTabWidget->currentWidget());
+        if (p) {
+            p->tabVisible();
+        }
+    }
+
+    // Update button states
+    syncTabState();
 }
 
 } // namespace Presentation
