@@ -239,9 +239,6 @@
          <property name="text">
           <string>[◀] Previous</string>
          </property>
-         <property name="shortcut">
-          <string>Left</string>
-         </property>
         </widget>
        </item>
        <item row="0" column="7">
@@ -276,9 +273,6 @@
          </property>
          <property name="text">
           <string>[▶] Next</string>
-         </property>
-         <property name="shortcut">
-          <string>Right</string>
          </property>
         </widget>
        </item>

@@ -80,11 +80,16 @@ MainWindow::MainWindow(QWidget *parent) :
 
     QObject::connect(m_quitDialog, &QDialog::finished, this, &MainWindow::quitDialogFinished);
 
-    // the designer can't set multiple shortcuts, so we'll do it ourselves
-    QShortcut *nextSlideDown = new QShortcut(QKeySequence("Down"), this);
-    QObject::connect(nextSlideDown, &QShortcut::activated, ui->nextBtn, &QAbstractButton::click);
-    QShortcut *prevSlideUp = new QShortcut(QKeySequence("Up"), this);
-    QObject::connect(prevSlideUp, &QShortcut::activated, ui->prevBtn, &QAbstractButton::click);
+    // HACK: We really don't want the left/right keys to trigger something else when the button
+    // is not enabled. That's why we are creating a manual shortcut.
+    QObject::connect(new QShortcut(QKeySequence(Qt::Key_Right), this),
+                     &QShortcut::activated, ui->nextBtn, &QAbstractButton::click);
+    QObject::connect(new QShortcut(QKeySequence(Qt::Key_Down), this),
+                     &QShortcut::activated, ui->nextBtn, &QAbstractButton::click);
+    QObject::connect(new QShortcut(QKeySequence(Qt::Key_Left), this),
+                     &QShortcut::activated, ui->prevBtn, &QAbstractButton::click);
+    QObject::connect(new QShortcut(QKeySequence(Qt::Key_Up), this),
+                     &QShortcut::activated, ui->prevBtn, &QAbstractButton::click);
 
     ui->tabWidget->addTab(m_configPane, tr("Configuration"));
     ui->tabWidget->addTab(m_trackPane, tr("Recording"));
