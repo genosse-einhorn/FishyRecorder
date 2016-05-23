@@ -56,7 +56,6 @@ PdfPresenter::PdfPresenter(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    QObject::connect(ui->deleteBtn, &QAbstractButton::clicked, this, &PdfPresenter::closeBtnClicked);
     QObject::connect(ui->slideList, &QListWidget::itemSelectionChanged, this, &PdfPresenter::itemSelected);
 
     m_thisPage = new QFutureWatcher<QPixmap>(this);
@@ -148,7 +147,7 @@ void PdfPresenter::updatePresentedPage()
     emit requestPresentation(m_presentationImageLbl);
 }
 
-PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
+PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName, const QString &title)
 {
     Poppler::Document *doc = Poppler::Document::load(fileName);
 
@@ -168,7 +167,11 @@ PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName)
     presenter->resetPresentationPixmaps();
     presenter->updatePresentedPage();
 
-    presenter->m_title = QFileInfo(fileName).fileName();
+    if (title.size()) {
+        presenter->m_title = title;
+    } else {
+        presenter->m_title = QFileInfo(fileName).fileName();
+    }
 
     return presenter;
 }
@@ -256,11 +259,6 @@ void PdfPresenter::resetPresentationPixmaps()
         m_thisPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo  , presentationWidth(), presentationHeight()));
         m_nextPage->setFuture(QtConcurrent::run(createImage, m_pdf, m_currentPageNo+1, presentationWidth(), presentationHeight()));
     }
-}
-
-void PdfPresenter::closeBtnClicked()
-{
-    this->deleteLater();
 }
 
 void PdfPresenter::itemSelected()

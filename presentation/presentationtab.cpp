@@ -90,9 +90,9 @@ void PresentationTab::freeze(bool freeze)
     m_presentationWindow->setFreeze(freeze);
 }
 
-PdfPresenter *PresentationTab::doPresentPdf(const QString &filename)
+PdfPresenter *PresentationTab::doPresentPdf(const QString &filename, const QString &title)
 {
-    PdfPresenter *presenter = PdfPresenter::loadPdfFile(filename);
+    PdfPresenter *presenter = PdfPresenter::loadPdfFile(filename, title);
 
 
     if (!presenter) {
@@ -188,7 +188,7 @@ void PresentationTab::openPpt()
     presentation->dynamicCall("SaveAs(const QString&, int)", QDir::toNativeSeparators(pdffile), 32);
     presentation->dynamicCall("Close()");
 
-    presenter = doPresentPdf(pdffile);
+    presenter = doPresentPdf(pdffile, QFileInfo(filename).fileName());
     if (presenter)
         QObject::connect(presenter, &QObject::destroyed, [=](){
             delete pdfdir;

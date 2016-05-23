@@ -61,7 +61,7 @@ private:
     QRect m_currentScreen { 0, 0, 0, 0 };
     QPointer<QWidget> m_lastActiveTab;
 
-    Presentation::PdfPresenter *doPresentPdf(const QString &filename);
+    Presentation::PdfPresenter *doPresentPdf(const QString &filename, const QString &title = QString());
 
     int insertTab(PresenterBase *widget);
 };

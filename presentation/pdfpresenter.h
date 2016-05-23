@@ -24,7 +24,7 @@ class PdfPresenter : public PresenterBase
     Q_OBJECT
 
 public:
-    static PdfPresenter* loadPdfFile(const QString& fileName);
+    static PdfPresenter* loadPdfFile(const QString& fileName, const QString &title = QString());
     ~PdfPresenter();
 
 public:
@@ -39,7 +39,6 @@ public slots:
     void tabVisible() override;
 
 private slots:
-    void closeBtnClicked();
     void itemSelected();
     void savePreview();
     void imageFinished();
