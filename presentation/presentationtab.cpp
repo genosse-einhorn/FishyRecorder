@@ -39,7 +39,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
     QObject::connect(ui->presentationTabWidget, &QTabWidget::currentChanged, this, &PresentationTab::tabChanged);
     QObject::connect(ui->presentationTabWidget, &QTabWidget::tabCloseRequested, this, &PresentationTab::tabClosed);
 
-    m_presentationWindow = new PresentationWindow(this);
+    m_presentationWindow = new PresentationWindow;
     QObject::connect(m_presentationWindow, &PresentationWindow::blankChanged, this, &PresentationTab::blankChanged);
     QObject::connect(m_presentationWindow, &PresentationWindow::freezeChanged, this, &PresentationTab::freezeChanged);
 
@@ -51,6 +51,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
 PresentationTab::~PresentationTab()
 {
     delete ui;
+    delete m_presentationWindow;
 }
 
 void PresentationTab::screenUpdated(const QRect &screen)

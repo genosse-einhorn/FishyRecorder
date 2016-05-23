@@ -5,6 +5,7 @@
 #include <QLabel>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QCloseEvent>
 
 #ifdef Q_OS_WIN32
 #   include <QtWin>
@@ -14,7 +15,7 @@ namespace Presentation {
 
 PresentationWindow::PresentationWindow(QWidget *parent) : QWidget(parent)
 {
-    this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint);
+    this->setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowDoesNotAcceptFocus);
     this->setAttribute(Qt::WA_ShowWithoutActivating);
     this->setWindowState(Qt::WindowFullScreen);
     this->setCursor(Qt::BlankCursor);
@@ -144,3 +145,9 @@ void PresentationWindow::updateStack()
 }
 
 } // namespace Presentation
+
+
+void Presentation::PresentationWindow::closeEvent(QCloseEvent *e)
+{
+    e->ignore();
+}

@@ -52,6 +52,10 @@ private:
     QStackedWidget *m_stack { nullptr };
 
     void updateStack();
+
+    // QWidget interface
+protected:
+    void closeEvent(QCloseEvent *) override;
 };
 
 } // namespace Presentation
