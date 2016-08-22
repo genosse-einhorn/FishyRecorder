@@ -28,7 +28,7 @@ private:
     int   r1, r2;                //rectangular-PDF random numbers
     float s1, s2;                //error feedback buffers
     float s  = 0.5f;              //set to 0.0f for no noise shaping
-    float w  = std::pow(2.0, 16-1);   //word length (usually bits=16)
+    float w  = 2 << 15;           //word length (usually bits=16)
     float wi = 1.0f / w;
     float d  = wi / RAND_MAX;     //dither amplitude (2 lsb)
     float o  = wi * 0.5f;         //remove dc offset

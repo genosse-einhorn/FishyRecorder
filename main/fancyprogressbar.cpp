@@ -1,6 +1,7 @@
 #include "fancyprogressbar.h"
 
 #include <QPainter>
+#include <cmath>
 
 FancyProgressBar::FancyProgressBar(QWidget *parent) :
     QWidget(parent)
