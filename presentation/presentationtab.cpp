@@ -3,6 +3,7 @@
 #include "presentation/screenviewcontrol.h"
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
+#include "presentation/mediapresenter.h"
 #include "presentation/presentationwindow.h"
 #include "presentation/presenterbase.h"
 #include "util/misc.h"
@@ -35,6 +36,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
 
     QObject::connect(m_welcome, &WelcomePane::pdfRequested, this, &PresentationTab::openPdf);
     QObject::connect(m_welcome, &WelcomePane::pptRequested, this, &PresentationTab::openPpt);
+    QObject::connect(m_welcome, &WelcomePane::videoRequested, this, &PresentationTab::openVideo);
 
     QObject::connect(ui->presentationTabWidget, &QTabWidget::currentChanged, this, &PresentationTab::tabChanged);
     QObject::connect(ui->presentationTabWidget, &QTabWidget::tabCloseRequested, this, &PresentationTab::tabClosed);
@@ -201,6 +203,21 @@ error:
     QMessageBox::critical(this, tr("Could not launch PPT"), tr("The PPT file could not be loaded."));
     delete pdfdir;
 #endif /* Q_OS_WIN32 */
+}
+
+void PresentationTab::openVideo()
+{
+    QString filename = QFileDialog::getOpenFileName(this, tr("Open Media"),
+                                                    QString(),
+                                                    tr("All Files (*.*)"));
+
+    if (!filename.size())
+        return;
+
+    MediaPresenter *p = new MediaPresenter(filename);
+
+    int i = insertTab(p);
+    ui->presentationTabWidget->setCurrentIndex(i);
 }
 
 void PresentationTab::tabChanged()

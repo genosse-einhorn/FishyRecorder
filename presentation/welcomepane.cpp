@@ -31,6 +31,7 @@ WelcomePane::WelcomePane(QWidget *parent) :
 
     QObject::connect(ui->openPdfButton, &QAbstractButton::clicked, this, &WelcomePane::pdfRequested);
     QObject::connect(ui->openPptButton, &QAbstractButton::clicked, this, &WelcomePane::pptRequested);
+    QObject::connect(ui->openVideoButton, &QAbstractButton::clicked, this, &WelcomePane::videoRequested);
 
     // force square button appearance
     for (QObject *o : children())
@@ -43,9 +44,6 @@ WelcomePane::WelcomePane(QWidget *parent) :
 #else
     ui->openPptButton->setEnabled(false);
 #endif
-
-    // Add ScreenView control
-
 }
 
 WelcomePane::~WelcomePane()

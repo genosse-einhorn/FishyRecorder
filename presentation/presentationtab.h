@@ -47,6 +47,7 @@ public slots:
 private slots:
     void openPdf();
     void openPpt();
+    void openVideo();
     void slotNoSlides() { canNextSlideChanged(false); canPrevSlideChanged(false); }
     void tabChanged();
     void syncTabState();

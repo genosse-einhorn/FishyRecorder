@@ -20,6 +20,7 @@ public:
 signals:
     void pdfRequested();
     void pptRequested();
+    void videoRequested();
 
 private:
     Ui::WelcomePane *ui;

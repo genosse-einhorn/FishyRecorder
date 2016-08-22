@@ -7,6 +7,9 @@
         <file>x-office-presentation.svg</file>
         <file>image-x-generic.svg</file>
         <file>video-x-wmv.svg</file>
+        <file>media-playback-start.svg</file>
+        <file>audio-volume-medium.svg</file>
+        <file>audio-volume-muted.svg</file>
     </qresource>
     <qresource prefix="/">
         <file>DejaVuSans.ttf</file>

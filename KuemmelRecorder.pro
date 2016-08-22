@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core widgets concurrent
+QT       += core widgets concurrent multimedia multimediawidgets
 CONFIG   += link_pkgconfig c++11
 CONFIG   -= exceptions rtti
 
@@ -49,7 +49,8 @@ SOURCES += \
     presentation/pdfpreviewwidget.cpp \
     export/flacfileexporter.cpp \
     presentation/presentationwindow.cpp \
-    presentation/presenterbase.cpp
+    presentation/presenterbase.cpp \
+    presentation/mediapresenter.cpp
 
 HEADERS += \
     recording/samplemover.h \
@@ -85,7 +86,8 @@ HEADERS += \
     presentation/pdfpreviewwidget.h \
     export/flacfileexporter.h \
     presentation/presentationwindow.h \
-    presentation/presenterbase.h
+    presentation/presenterbase.h \
+    presentation/mediapresenter.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -98,7 +100,8 @@ FORMS    += \
     export/mp3paramsdialog.ui \
     presentation/presentationtab.ui \
     presentation/welcomepane.ui \
-    presentation/pdfpresenter.ui
+    presentation/pdfpresenter.ui \
+    presentation/mediapresenter.ui
 
 TRANSLATIONS = l10n/recorder_de.ts
 

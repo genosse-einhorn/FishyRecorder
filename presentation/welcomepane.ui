@@ -80,11 +80,8 @@
    </item>
    <item row="1" column="3" alignment="Qt::AlignHCenter|Qt::AlignTop">
     <widget class="QToolButton" name="openVideoButton">
-     <property name="enabled">
-      <bool>false</bool>
-     </property>
      <property name="text">
-      <string>Video</string>
+      <string>Media</string>
      </property>
      <property name="icon">
       <iconset resource="../res/stuff.qrc">
