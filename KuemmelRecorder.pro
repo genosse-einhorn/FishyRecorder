@@ -113,20 +113,6 @@ win32 {
     QT += xml
 
     QT += winextras axcontainer svg
-
-    INCLUDEPATH += external/d3d-headers
-
-    SOURCES += \
-        presentation/screenviewcontrol.cpp \
-        presentation/screenviewpresenter.cpp \
-        presentation/screenviewrenderer.cpp
-    HEADERS += \
-        presentation/screenviewcontrol.h \
-        presentation/screenviewpresenter.h \
-        util/com.h \
-        presentation/screenviewrenderer.h \
-        presentation/screenviewshaders.h \
-        util/win32.h
 }
 
 CONFIG(debug, debug|release) {

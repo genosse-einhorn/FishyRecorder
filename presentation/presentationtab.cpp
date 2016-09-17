@@ -1,6 +1,5 @@
 #include "presentationtab.h"
 #include "ui_presentationtab.h"
-#include "presentation/screenviewcontrol.h"
 #include "presentation/welcomepane.h"
 #include "presentation/pdfpresenter.h"
 #include "presentation/mediapresenter.h"
@@ -16,7 +15,6 @@
 #include <QLabel>
 
 #ifdef Q_OS_WIN32
-#   include "presentation/screenviewpresenter.h"
 #   include <QAxObject>
 #endif
 
@@ -44,10 +42,6 @@ PresentationTab::PresentationTab(QWidget *parent) :
     m_presentationWindow = new PresentationWindow;
     QObject::connect(m_presentationWindow, &PresentationWindow::blankChanged, this, &PresentationTab::blankChanged);
     QObject::connect(m_presentationWindow, &PresentationWindow::freezeChanged, this, &PresentationTab::freezeChanged);
-
-#ifdef Q_OS_WIN32
-    this->insertTab(new ScreenViewPresenter);
-#endif
 }
 
 PresentationTab::~PresentationTab()
