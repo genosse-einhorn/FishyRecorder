@@ -37,167 +37,6 @@
      <number>3</number>
     </property>
     <item row="1" column="0">
-     <widget class="Error::Widget" name="recordingErrorDisplay" native="true">
-      <property name="autoFillBackground">
-       <bool>true</bool>
-      </property>
-     </widget>
-    </item>
-    <item row="0" column="0">
-     <layout class="QHBoxLayout" name="horizontalLayout">
-      <item>
-       <layout class="QGridLayout" name="gridLayout">
-        <property name="topMargin">
-         <number>6</number>
-        </property>
-        <property name="bottomMargin">
-         <number>6</number>
-        </property>
-        <property name="verticalSpacing">
-         <number>12</number>
-        </property>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>R</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_2">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>L</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="FancyProgressBar" name="levelL" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="FancyProgressBar" name="levelR" native="true">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <layout class="QGridLayout" name="gridLayout_4">
-        <item row="2" column="0">
-         <widget class="QLabel" name="label_5">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Available:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="0">
-         <widget class="QLabel" name="label_3">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Total:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>Track:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="0" column="1">
-         <widget class="QLabel" name="totalRecTimeLbl">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>0:00:00</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="1" column="1">
-         <widget class="QLabel" name="trackTimeLbl">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>0:00:00</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="1">
-         <widget class="QLabel" name="diskSpaceLbl">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="text">
-           <string>9:99:99</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-     </layout>
-    </item>
-    <item row="3" column="0">
      <widget class="QWidget" name="bottomButtonBox" native="true">
       <layout class="QGridLayout" name="gridLayout_3">
        <property name="leftMargin">
@@ -212,23 +51,7 @@
        <property name="bottomMargin">
         <number>0</number>
        </property>
-       <item row="0" column="3">
-        <widget class="QPushButton" name="trackNextBtn">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Start a new track and advance the current presentation to the next slide.</string>
-         </property>
-         <property name="text">
-          <string>[  ] Track&amp;&amp;Next</string>
-         </property>
-         <property name="shortcut">
-          <string>Space</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="4">
+       <item row="0" column="2">
         <widget class="QPushButton" name="prevBtn">
          <property name="enabled">
           <bool>false</bool>
@@ -241,7 +64,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="7">
+       <item row="0" column="5">
         <widget class="QPushButton" name="blankBtn">
          <property name="enabled">
           <bool>false</bool>
@@ -263,7 +86,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="5">
+       <item row="0" column="3">
         <widget class="QPushButton" name="nextBtn">
          <property name="enabled">
           <bool>false</bool>
@@ -273,22 +96,6 @@
          </property>
          <property name="text">
           <string>[▶] Next</string>
-         </property>
-        </widget>
-       </item>
-       <item row="0" column="2">
-        <widget class="QPushButton" name="trackBtn">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
-         <property name="toolTip">
-          <string>Starts a new track. This is instant</string>
-         </property>
-         <property name="text">
-          <string>[T] Track</string>
-         </property>
-         <property name="shortcut">
-          <string>T</string>
          </property>
         </widget>
        </item>
@@ -330,7 +137,7 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="6">
+       <item row="0" column="4">
         <widget class="QPushButton" name="freezeBtn">
          <property name="enabled">
           <bool>false</bool>
@@ -352,7 +159,7 @@
       </layout>
      </widget>
     </item>
-    <item row="2" column="0">
+    <item row="0" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="tabPosition">
        <enum>QTabWidget::West</enum>
@@ -377,20 +184,6 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <customwidgets>
-  <customwidget>
-   <class>Error::Widget</class>
-   <extends>QWidget</extends>
-   <header>error/widget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
-   <class>FancyProgressBar</class>
-   <extends>QWidget</extends>
-   <header>main/fancyprogressbar.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>
