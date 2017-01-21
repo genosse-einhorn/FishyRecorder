@@ -140,5 +140,3 @@ INCLUDEPATH += external
 
 RESOURCES += \
     res/stuff.qrc
-
-DISTFILES +=

@@ -96,8 +96,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     m_presentation = new Presentation::PresentationTab(this);
 
-    QObject::connect(m_configPane, &ConfigPane::presentationScreenChanged, m_presentation, &Presentation::PresentationTab::screenUpdated);
-
     QObject::connect(ui->trackNextBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::nextSlide);
     QObject::connect(ui->nextBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::nextSlide);
     QObject::connect(ui->prevBtn, &QAbstractButton::clicked, m_presentation, &Presentation::PresentationTab::previousSlide);

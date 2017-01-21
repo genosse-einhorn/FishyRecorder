@@ -22,6 +22,16 @@ signals:
     void pptRequested();
     void videoRequested();
 
+    void presentationScreenChanged(const QRect& virtualCoordinates);
+
+public slots:
+    void setPresentationScreen(const QRect &coordinates);
+
+private slots:
+    void cbScreenChanged();
+    void screenAdded(QScreen *screen);
+    void screenRemoved(QScreen *screen);
+
 private:
     Ui::WelcomePane *ui;
 };

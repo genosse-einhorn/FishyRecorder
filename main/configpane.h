@@ -33,7 +33,6 @@ signals:
     void monitorDeviceChanged(PaDeviceIndex index);
     void audioDataDirChanged(const QString& dir);
     void availableAudioSpaceChanged(uint64_t freeBytes);
-    void presentationScreenChanged(const QRect& virtualCoordinates);
     void latencyChanged(double value);
     void volumeMultiplicatorChanged(float multiplicator);
 
@@ -46,12 +45,9 @@ public slots:
 private slots:
     void recordDevComboChanged(int index);
     void monitorDevComboChanged(int index);
-    void screenComboChanged(int index);
     void audioDataBtnClicked();
     void audioDataFieldChanged();
     void updateAvailableSpace();
-    void screenAdded(QScreen *screen);
-    void screenRemoved(QScreen *screen);
     void latencySliderMoved(int value);
     void volumeSliderMoved(int value);
 

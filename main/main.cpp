@@ -9,6 +9,10 @@ int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
 
+    // For QSettings, mainly
+    a.setOrganizationDomain("Genosse Einhorn");
+    a.setApplicationName("KuemmelRecorder");
+
     // setup translations
     QTranslator translator;
     translator.load(QLocale::system(), ":/locale/");

@@ -80,38 +80,6 @@ void ConfigPane::init()
     t->setInterval(1000*60*2);
     QObject::connect(t, &QTimer::timeout, this, &ConfigPane::updateAvailableSpace);
     t->start();
-
-    ui->screenCombo->addItem(tr("< No Screen >"), QRect(0, 0, 0, 0));
-    for (QScreen* screen : QGuiApplication::screens()) {
-        ui->screenCombo->addItem(
-                    QString("%1 [%2x%3 at %4,%5]")
-                        .arg(screen->name())
-                        .arg(screen->size().width())
-                        .arg(screen->size().height())
-                        .arg(screen->geometry().left())
-                        .arg(screen->geometry().top()),
-                    screen->geometry());
-    }
-
-    // find configured screen
-    QStringList screenSpec = m_config->readConfigString("presentation_screen").split(',');
-    if (screenSpec.size() >= 4) {
-        QRect screen(screenSpec[0].toInt(), screenSpec[1].toInt(), screenSpec[2].toInt(), screenSpec[3].toInt());
-
-        for (int i = 0; i < ui->screenCombo->count(); ++i) {
-            if (ui->screenCombo->itemData(i).toRect() != screen)
-                continue;
-
-            ui->screenCombo->setCurrentIndex(i);
-            break;
-        }
-    }
-
-    QObject::connect(ui->screenCombo, SELECT_SIGNAL_OVERLOAD<int>::OF(&QComboBox::currentIndexChanged), this, &ConfigPane::screenComboChanged);
-    QObject::connect((QGuiApplication*)QGuiApplication::instance(), &QGuiApplication::screenAdded, this, &ConfigPane::screenAdded);
-    QObject::connect((QGuiApplication*)QGuiApplication::instance(), &QGuiApplication::screenRemoved, this, &ConfigPane::screenRemoved);
-
-    screenComboChanged(ui->screenCombo->currentIndex());
 }
 
 void ConfigPane::displayDeviceError(Error::Provider::ErrorType type, const QString &str1, const QString &str2)
@@ -164,16 +132,6 @@ void ConfigPane::monitorDevComboChanged(int index)
     emit monitorDeviceChanged(ui->monitorDevCombo->itemData(index).toInt());
 }
 
-void ConfigPane::screenComboChanged(int index)
-{
-    QRect screen = ui->screenCombo->itemData(index).toRect();
-
-    m_config->writeConfigString("presentation_screen",
-                                QString("%1,%2,%3,%4").arg(screen.x()).arg(screen.y()).arg(screen.width()).arg(screen.height()));
-
-    emit presentationScreenChanged(screen);
-}
-
 void ConfigPane::audioDataBtnClicked()
 {
     QString newDir = QFileDialog::getExistingDirectory(this,
@@ -203,26 +161,6 @@ void ConfigPane::updateAvailableSpace()
     ui->diskSpaceLbl->setText(Util::DiskSpace::humanReadable(availableSpace, true));
 
     emit availableAudioSpaceChanged(availableSpace);
-}
-
-void ConfigPane::screenAdded(QScreen *screen)
-{
-    ui->screenCombo->addItem(
-                QString("%1 [%2x%3 at %4,%5]")
-                    .arg(screen->name())
-                    .arg(screen->size().width())
-                    .arg(screen->size().height())
-                    .arg(screen->geometry().left())
-                    .arg(screen->geometry().top()),
-                screen->geometry());
-}
-
-void ConfigPane::screenRemoved(QScreen *screen)
-{
-    for (int i = 0; i < ui->screenCombo->count(); ++i) {
-        if (ui->screenCombo->itemData(i).toRect() == screen->geometry())
-            ui->screenCombo->removeItem(i);
-    }
 }
 
 void ConfigPane::latencySliderMoved(int value)

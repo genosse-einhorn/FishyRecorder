@@ -13,6 +13,7 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QLabel>
+#include <QSettings>
 
 #ifdef Q_OS_WIN32
 #   include <QAxObject>
@@ -35,6 +36,7 @@ PresentationTab::PresentationTab(QWidget *parent) :
     QObject::connect(m_welcome, &WelcomePane::pdfRequested, this, &PresentationTab::openPdf);
     QObject::connect(m_welcome, &WelcomePane::pptRequested, this, &PresentationTab::openPpt);
     QObject::connect(m_welcome, &WelcomePane::videoRequested, this, &PresentationTab::openVideo);
+    QObject::connect(m_welcome, &WelcomePane::presentationScreenChanged, this, &PresentationTab::screenUpdated);
 
     QObject::connect(ui->presentationTabWidget, &QTabWidget::currentChanged, this, &PresentationTab::tabChanged);
     QObject::connect(ui->presentationTabWidget, &QTabWidget::tabCloseRequested, this, &PresentationTab::tabClosed);
@@ -42,6 +44,8 @@ PresentationTab::PresentationTab(QWidget *parent) :
     m_presentationWindow = new PresentationWindow;
     QObject::connect(m_presentationWindow, &PresentationWindow::blankChanged, this, &PresentationTab::blankChanged);
     QObject::connect(m_presentationWindow, &PresentationWindow::freezeChanged, this, &PresentationTab::freezeChanged);
+
+    screenUpdated(QSettings().value("Presentation Screen", QVariant::fromValue(QRect())).toRect());
 }
 
 PresentationTab::~PresentationTab()
@@ -52,6 +56,10 @@ PresentationTab::~PresentationTab()
 
 void PresentationTab::screenUpdated(const QRect &screen)
 {
+    // save screen position
+    m_welcome->setPresentationScreen(screen);
+    QSettings().setValue("Presentation Screen", QVariant::fromValue(screen));
+
     // reposition the presentation window
     m_presentationWindow->setScreen(screen);
 
