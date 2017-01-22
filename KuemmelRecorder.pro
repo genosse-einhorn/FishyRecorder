@@ -22,7 +22,6 @@ SOURCES += \
     presentation/presentationtab.cpp \
     presentation/welcomepane.cpp \
     presentation/pdfpresenter.cpp \
-    presentation/pdfpreviewwidget.cpp \
     presentation/presentationwindow.cpp \
     presentation/presenterbase.cpp \
     presentation/mediapresenter.cpp \
@@ -33,7 +32,8 @@ SOURCES += \
     recording/lameencoderstream.cpp \
     recording/levelcalculator.cpp \
     recording/statusview.cpp \
-    recording/external/pa_ringbuffer.c
+    recording/external/pa_ringbuffer.c \
+    presentation/pixmapdisplaywidget.cpp
 
 HEADERS += \
     util/misc.h \
@@ -42,7 +42,6 @@ HEADERS += \
     presentation/presentationtab.h \
     presentation/welcomepane.h \
     presentation/pdfpresenter.h \
-    presentation/pdfpreviewwidget.h \
     presentation/presentationwindow.h \
     presentation/presenterbase.h \
     presentation/mediapresenter.h \
@@ -54,7 +53,8 @@ HEADERS += \
     recording/statusview.h \
     recording/levelcalculator.h \
     recording/external/pa_memorybarrier.h \
-    recording/external/pa_ringbuffer.h
+    recording/external/pa_ringbuffer.h \
+    presentation/pixmapdisplaywidget.h
 
 FORMS    += \
     main/mainwindow.ui \

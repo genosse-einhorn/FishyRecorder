@@ -114,8 +114,10 @@ void PdfPresenter::imageFinished()
 {
     auto *watcher = static_cast<QFutureWatcher<QPixmap>*>(QObject::sender());
 
-    if (watcher == m_thisPage)
+    if (watcher == m_thisPage) {
         m_presentationImageLbl->setPixmap(watcher->result());
+        ui->preview->setPixmap(watcher->result());
+    }
 }
 
 void PdfPresenter::updatePresentedPage()
@@ -134,14 +136,14 @@ void PdfPresenter::updatePresentedPage()
 
     // Set presentation window
     if (m_presentationImageLbl) {
-        if (m_thisPage->isFinished())
+        if (m_thisPage->isFinished()) {
             m_presentationImageLbl->setPixmap(m_thisPage->result());
-        else
+            ui->preview->setPixmap(m_thisPage->result());
+        } else {
             m_presentationImageLbl->setPixmap(QPixmap());
+            ui->preview->setPixmap(QPixmap());
+        }
     }
-
-    // Set preview window
-    ui->preview->setPage(m_currentPageNo);
 
     // Request our slide to be presented
     emit requestPresentation(m_presentationImageLbl);
@@ -161,7 +163,6 @@ PdfPresenter *PdfPresenter::loadPdfFile(const QString &fileName, const QString &
 
     PdfPresenter *presenter = new PdfPresenter();
     presenter->m_pdf.reset(doc);
-    presenter->ui->preview->setDocument(presenter->m_pdf);
 
     presenter->kickoffPreviewList();
     presenter->resetPresentationPixmaps();
