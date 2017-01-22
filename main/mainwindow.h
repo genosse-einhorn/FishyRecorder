@@ -12,6 +12,12 @@ namespace Presentation {
     class PresentationTab;
 }
 
+namespace Recording {
+    class Coordinator;
+}
+
+class QThread;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -23,6 +29,9 @@ public:
 private:
     std::unique_ptr<Ui::MainWindow> ui;
     Presentation::PresentationTab *m_presentation = nullptr;
+
+    Recording::Coordinator *m_recorder;
+    QThread                *m_recorderThread;
 };
 
 #endif // MAINWINDOW_H

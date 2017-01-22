@@ -5,7 +5,7 @@
 #-------------------------------------------------
 
 QT       += core widgets concurrent multimedia multimediawidgets
-CONFIG   += link_pkgconfig c++11
+CONFIG   += link_pkgconfig c++17
 CONFIG   -= exceptions rtti
 
 PKGCONFIG += portaudio-2.0 sqlite3 poppler-qt5 flac
@@ -25,7 +25,15 @@ SOURCES += \
     presentation/pdfpreviewwidget.cpp \
     presentation/presentationwindow.cpp \
     presentation/presenterbase.cpp \
-    presentation/mediapresenter.cpp
+    presentation/mediapresenter.cpp \
+    recording/configuratorpane.cpp \
+    recording/coordinator.cpp \
+    recording/errorwidget.cpp \
+    recording/fancyprogressbar.cpp \
+    recording/lameencoderstream.cpp \
+    recording/levelcalculator.cpp \
+    recording/statusview.cpp \
+    recording/external/pa_ringbuffer.c
 
 HEADERS += \
     util/misc.h \
@@ -37,7 +45,16 @@ HEADERS += \
     presentation/pdfpreviewwidget.h \
     presentation/presentationwindow.h \
     presentation/presenterbase.h \
-    presentation/mediapresenter.h
+    presentation/mediapresenter.h \
+    recording/configuratorpane.h \
+    recording/coordinator.h \
+    recording/errorwidget.h \
+    recording/fancyprogressbar.h \
+    recording/lameencoderstream.h \
+    recording/statusview.h \
+    recording/levelcalculator.h \
+    recording/external/pa_memorybarrier.h \
+    recording/external/pa_ringbuffer.h
 
 FORMS    += \
     main/mainwindow.ui \
@@ -45,7 +62,9 @@ FORMS    += \
     presentation/presentationtab.ui \
     presentation/welcomepane.ui \
     presentation/pdfpresenter.ui \
-    presentation/mediapresenter.ui
+    presentation/mediapresenter.ui \
+    recording/recordingconfiguratorpane.ui \
+    recording/recordingstatusview.ui
 
 TRANSLATIONS = l10n/recorder_de.ts
 

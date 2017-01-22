@@ -36,7 +36,10 @@
     <property name="bottomMargin">
      <number>3</number>
     </property>
-    <item row="1" column="0">
+    <item row="0" column="0">
+     <widget class="Recording::StatusView" name="recordStatus" native="true"/>
+    </item>
+    <item row="3" column="0">
      <widget class="QWidget" name="bottomButtonBox" native="true">
       <layout class="QGridLayout" name="gridLayout_3">
        <property name="leftMargin">
@@ -101,9 +104,6 @@
        </item>
        <item row="0" column="1">
         <widget class="QPushButton" name="monitorBtn">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
          <property name="text">
           <string>[M] Monitor</string>
          </property>
@@ -120,9 +120,6 @@
        </item>
        <item row="0" column="0">
         <widget class="QPushButton" name="recordBtn">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
          <property name="toolTip">
           <string>Starts or stops the recording of audio. This is not an instant operation, there might be latencies of up to a second involved.</string>
          </property>
@@ -159,7 +156,7 @@
       </layout>
      </widget>
     </item>
-    <item row="0" column="0">
+    <item row="2" column="0">
      <widget class="QTabWidget" name="tabWidget">
       <property name="tabPosition">
        <enum>QTabWidget::West</enum>
@@ -171,6 +168,9 @@
        <enum>Qt::ElideNone</enum>
       </property>
      </widget>
+    </item>
+    <item row="1" column="0">
+     <widget class="Recording::ErrorWidget" name="recordError" native="true"/>
     </item>
    </layout>
   </widget>
@@ -184,6 +184,20 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>Recording::StatusView</class>
+   <extends>QWidget</extends>
+   <header>recording/statusview.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>Recording::ErrorWidget</class>
+   <extends>QWidget</extends>
+   <header>recording/errorwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections/>
 </ui>

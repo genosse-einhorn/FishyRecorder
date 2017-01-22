@@ -4,6 +4,8 @@
 #include "util/misc.h"
 #include "main/aboutpane.h"
 #include "presentation/presentationtab.h"
+#include "recording/coordinator.h"
+#include "recording/configuratorpane.h"
 
 #include <QDebug>
 #include <QFile>
@@ -24,8 +26,23 @@ MainWindow::MainWindow(QWidget *parent) :
     this->setAttribute(Qt::WA_NoSystemBackground, false);
 #endif
 
-    //QObject::connect(ui->recordBtn, &QAbstractButton::toggled, m_mover, &Recording::SampleMover::setRecordingState);
-    //QObject::connect(ui->monitorBtn, &QAbstractButton::toggled, m_mover, &Recording::SampleMover::setMonitorEnabled);
+    // Setup the recording subsystem
+    m_recorder = new Recording::Coordinator(this);
+    m_recorderThread = new QThread(this);
+    m_recorder->moveToThread(m_recorderThread);
+    QObject::connect(m_recorderThread, &QThread::finished, m_recorder, &QObject::deleteLater); // this is legal and even recommended by the docs for QThread::finished
+    m_recorderThread->start();
+
+    QObject::connect(m_recorder, &Recording::Coordinator::statusUpdate, ui->recordStatus, &Recording::StatusView::handleStatusUpdate);
+    QObject::connect(m_recorder, &Recording::Coordinator::error, ui->recordError, &Recording::ErrorWidget::displayError);
+
+    Recording::ConfiguratorPane *recordpane = new Recording::ConfiguratorPane(this);
+    recordpane->hookupCoordinator(m_recorder);
+
+    QObject::connect(ui->recordBtn, &QAbstractButton::toggled, m_recorder, &Recording::Coordinator::setRecording);
+    QObject::connect(ui->monitorBtn, &QAbstractButton::toggled, m_recorder, &Recording::Coordinator::setMonitorEnabled);
+    QObject::connect(m_recorder, &Recording::Coordinator::recordingChanged, ui->recordBtn, &QAbstractButton::setChecked);
+    QObject::connect(m_recorder, &Recording::Coordinator::monitorEnabledChanged, ui->monitorBtn, &QAbstractButton::setChecked);
 
     // HACK: We really don't want the left/right keys to trigger something else when the button
     // is not enabled. That's why we are creating a manual shortcut.
@@ -52,6 +69,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->freezeBtn->setEnabled(true);
     ui->blankBtn->setEnabled(true);
 
+    ui->tabWidget->addTab(recordpane, tr("Recording"));
     ui->tabWidget->addTab(m_presentation, tr("Presentation"));
 
     ui->tabWidget->addTab(new AboutPane(this), tr("About"));
@@ -124,8 +142,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ).replace("%1", this->palette().color(QPalette::Window).name())
      .replace("%2", this->palette().color(QPalette::Foreground).name())
      .replace("%3", this->palette().color(QPalette::Light).name()));
+
+    // VU meter style: Make overshoot red
+    QPalette vupal = ui->recordStatus->palette();
+    vupal.setBrush(QPalette::Highlight, QColor(0xFF, 0, 0));
+    ui->recordStatus->setPalette(vupal);
 }
 
 MainWindow::~MainWindow()
 {
+    m_recorderThread->quit();
+    m_recorderThread->wait();
+    delete m_recorderThread;
 }
